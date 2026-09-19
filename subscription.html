@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>订阅管理 · Subscriptions</title>
+  <style>
+    :root {
+      --bg: #f2f2f7;
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --card-inner: #ffffff;
+      --primary: #0071e3;
+      --text-main: #1d1d1f;
+      --text-sub: #86868b;
+      --danger: #ff3b30;
+      --warning: #ff9500;
+      --border: rgba(0, 0, 0, 0.08);
+      --radius-lg: 20px;
+      --radius-md: 12px;
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      padding: 24px 16px 80px;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 440px; margin: 0 auto; }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+
+    .header-actions { display: flex; gap: 8px; }
+
+    .pill-select {
+      background: var(--card-inner);
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+
+    .pill-select select {
+      border: none;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .month-bar {
+      background: var(--card-inner);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid var(--border);
+    }
+
+    .month-bar label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .month-bar input[type="month"] {
+      border: 1px solid var(--border);
+      background: #fbfbfd;
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 14px;
+      color: var(--primary);
+      font-weight: 600;
+      outline: none;
+    }
+
+    .overview-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .overview-label {
+      font-size: 13px;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .overview-amount {
+      font-size: 38px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      margin: 6px 0 14px;
+      color: var(--text-main);
+    }
+
+    .overview-details {
+      display: flex;
+      justify-content: space-around;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+
+    .detail-title { font-size: 12px; color: var(--text-sub); }
+    .detail-val { font-size: 15px; font-weight: 600; margin-top: 2px; }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 0 8px 8px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .link-btn {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .form-card {
+      background: var(--card-inner);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+
+    .input-row { margin-bottom: 12px; }
+    .input-row:last-child { margin-bottom: 0; }
+
+    input, select, textarea {
+      width: 100%;
+      height: 44px;
+      padding: 0 14px;
+      border: 1px solid var(--border);
+      background: #fbfbfd;
+      border-radius: var(--radius-md);
+      font-size: 15px;
+      color: var(--text-main);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    textarea {
+      height: 100px;
+      padding: 10px 14px;
+      font-family: inherit;
+      resize: vertical;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+      background: #fff;
+    }
+
+    .dual-input {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn-group { display: flex; gap: 8px; margin-top: 8px; }
+
+    .btn-action {
+      flex: 1;
+      height: 42px;
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-add { background: var(--primary); }
+    .btn-cancel { background: var(--text-sub); display: none; }
+    .btn-save { background: var(--warning); display: none; }
+    .btn-copy { background: #5856d6; display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+    #import-card { display: none; }
+
+    .list-group { display: flex; flex-direction: column; gap: 10px; }
+
+    .sub-item {
+      background: var(--card-inner);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+
+    .sub-info { display: flex; flex-direction: column; gap: 2px; }
+    .sub-name { font-size: 15px; font-weight: 600; }
+    .sub-tag { font-size: 12px; color: var(--text-sub); }
+
+    .sub-cost-box { display: flex; align-items: center; gap: 10px; }
+    .sub-cost-details { display: flex; flex-direction: column; align-items: flex-end; }
+    .sub-price { font-size: 15px; font-weight: 700; text-align: right; }
+    .sub-cycle { font-size: 11px; color: var(--text-sub); }
+
+    .action-buttons { display: flex; gap: 4px; }
+
+    .icon-btn {
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .edit-btn { background: #e5f1ff; color: var(--primary); }
+    .delete-btn { background: #ffe5e5; color: var(--danger); }
+
+    .empty-hint {
+      text-align: center;
+      padding: 30px;
+      color: var(--text-sub);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>订阅管理</h1>
+      <div class="header-actions">
+        <div class="pill-select">
+          <select id="currency" onchange="render()">
+            <option value="RM">RM</option>
+            <option value="$">USD</option>
+            <option value="S$">SGD</option>
+            <option value="¥">RMB</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <div class="month-bar">
+      <label for="month-picker">选择账单月份</label>
+      <input type="month" id="month-picker" onchange="switchMonth(this.value)" />
+    </div>
+
+    <div class="overview-card">
+      <div class="overview-label" id="overview-month-title">本月固定支出折算</div>
+      <div class="overview-amount" id="total-monthly">RM 0.00</div>
+      <div class="overview-details">
+        <div class="detail-item">
+          <div class="detail-title">当月项目</div>
+          <div class="detail-val" id="active-count">0 项</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-title">按此年化折算</div>
+          <div class="detail-val" id="total-yearly">RM 0.00</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 获取提示词面板 -->
+    <div class="section-title" style="margin: 0 8px 8px;">1. 获取提取提示词</div>
+    <div class="form-card" style="margin-bottom: 20px;">
+      <div class="input-row">
+        <textarea id="prompt-text" readonly style="height: 80px; font-size: 14px; color: var(--text-main); background: #f2f2f7;">请从我的邮件中提取上个月的所有订阅付款信息，并按以下格式输出，不要有任何多余的废话和寒暄：服务名称, 金额, 类别。 例如： Spotify, 19.80, 影音娱乐 ChatGPT, 99.90, AI / 生产力</textarea>
+      </div>
+      <div class="btn-group" style="margin-top: 0;">
+        <button class="btn-action btn-copy" onclick="copyPrompt()">📋 一键复制提示词</button>
+      </div>
+    </div>
+
+    <div id="import-card" class="form-card">
+      <div class="section-title" style="margin-bottom:8px;">2. 粘贴导入数据</div>
+      <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 8px;">
+        每行格式：服务名称, 金额, 类别（或直接粘贴 JSON）
+      </p>
+      <div class="input-row">
+        <textarea id="import-text" placeholder="在此粘贴 Gemini 整理好的数据..."></textarea>
+      </div>
+      <div class="btn-group">
+        <button class="btn-action btn-add" onclick="handleImportText()">导入到当月</button>
+        <button class="btn-action btn-cancel" style="display:block;" onclick="toggleImportCard(false)">取消</button>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <span class="section-title" id="form-title">添加订阅</span>
+      <button class="link-btn" id="show-import-btn" onclick="toggleImportCard(true)">+ 批量粘贴导入</button>
+    </div>
+
+    <div class="form-card">
+      <div class="input-row">
+        <input type="text" id="name" placeholder="服务名称 (如: Spotify, ChatGPT)" />
+      </div>
+      <div class="input-row dual-input">
+        <input type="number" id="price" step="0.01" placeholder="金额" />
+        <select id="cycle">
+          <option value="monthly">按月付</option>
+          <option value="yearly">按年付</option>
+        </select>
+      </div>
+      <div class="input-row">
+        <select id="category">
+          <option value="AI / 生产力">AI / 生产力</option>
+          <option value="影音娱乐">影音娱乐</option>
+          <option value="创作工具">创作工具</option>
+          <option value="生活 / 公用事业">生活 / 公用事业</option>
+          <option value="云服务 / 其他">云服务 / 其他</option>
+        </select>
+      </div>
+      <div class="btn-group">
+        <button class="btn-action btn-add" id="btn-add" onclick="addSubscription()">添加至该月</button>
+        <button class="btn-action btn-save" id="btn-save" onclick="saveEdit()">保存修改</button>
+        <button class="btn-action btn-cancel" id="btn-cancel" onclick="cancelEdit()">取消</button>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <span class="section-title">当月订阅明细</span>
+      <button class="link-btn" style="color:var(--danger);" onclick="clearCurrentMonth()">清空当月</button>
+    </div>
+    <div class="list-group" id="sub-list"></div>
+  </div>
+
+  <script>
+    let allRecords = JSON.parse(localStorage.getItem('subscriptions_monthly_v1')) || {};
+
+    const now = new Date();
+    let currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    let editingIndex = -1;
+
+    document.getElementById('month-picker').value = currentMonth;
+
+    function saveAndRender() {
+      localStorage.setItem('subscriptions_monthly_v1', JSON.stringify(allRecords));
+      render();
+    }
+
+    function switchMonth(newMonth) {
+      if (!newMonth) return;
+      currentMonth = newMonth;
+      cancelEdit();
+      render();
+    }
+
+    function getCurrentItems() {
+      if (!allRecords[currentMonth]) {
+        allRecords[currentMonth] = [];
+      }
+      return allRecords[currentMonth];
+    }
+
+    function render() {
+      const currency = document.getElementById('currency').value;
+      const listEl = document.getElementById('sub-list');
+      const items = getCurrentItems();
+      listEl.innerHTML = '';
+
+      let totalMonthly = 0;
+
+      document.getElementById('overview-month-title').innerText = `${currentMonth} 支出折算`;
+
+      if (items.length === 0) {
+        listEl.innerHTML = `<div class="empty-hint">${currentMonth} 暂无记录，可手动添加或批量导入</div>`;
+      }
+
+      items.forEach((item, index) => {
+        const monthlyCost = item.cycle === 'yearly' ? item.price / 12 : Number(item.price);
+        totalMonthly += monthlyCost;
+
+        const el = document.createElement('div');
+        el.className = 'sub-item';
+        if (index === editingIndex) {
+          el.style.borderColor = 'var(--warning)';
+          el.style.backgroundColor = '#fff9f0';
+        }
+
+        el.innerHTML = `
+          <div class="sub-info">
+            <span class="sub-name">${item.name}</span>
+            <span class="sub-tag">${item.category || '未分类'}</span>
+          </div>
+          <div class="sub-cost-box">
+            <div class="sub-cost-details">
+              <span class="sub-price">${currency} ${Number(item.price).toFixed(2)}</span>
+              <span class="sub-cycle">${item.cycle === 'yearly' ? '每年' : '每月'}</span>
+            </div>
+            <div class="action-buttons">
+              <button class="icon-btn edit-btn" onclick="startEdit(${index})">✎</button>
+              <button class="icon-btn delete-btn" onclick="deleteItem(${index})">✕</button>
+            </div>
+          </div>
+        `;
+        listEl.appendChild(el);
+      });
+
+      document.getElementById('total-monthly').innerText = `${currency} ${totalMonthly.toFixed(2)}`;
+      document.getElementById('total-yearly').innerText = `${currency} ${(totalMonthly * 12).toFixed(2)}`;
+      document.getElementById('active-count').innerText = `${items.length} 项`;
+    }
+
+    function addSubscription() {
+      const name = document.getElementById('name').value.trim();
+      const price = parseFloat(document.getElementById('price').value);
+      const cycle = document.getElementById('cycle').value;
+      const category = document.getElementById('category').value;
+
+      if (!name || isNaN(price) || price <= 0) {
+        alert("请输入有效的服务名称和金额");
+        return;
+      }
+
+      getCurrentItems().unshift({ name, price, cycle, category });
+      clearForm();
+      saveAndRender();
+    }
+
+    function deleteItem(index) {
+      if (index === editingIndex) cancelEdit();
+      getCurrentItems().splice(index, 1);
+      if (index < editingIndex) editingIndex--;
+      saveAndRender();
+    }
+
+    function startEdit(index) {
+      editingIndex = index;
+      const item = getCurrentItems()[index];
+
+      document.getElementById('name').value = item.name;
+      document.getElementById('price').value = item.price;
+      document.getElementById('cycle').value = item.cycle || 'monthly';
+      document.getElementById('category').value = item.category;
+
+      document.getElementById('form-title').innerText = "编辑项目";
+      document.getElementById('btn-add').style.display = 'none';
+      document.getElementById('btn-save').style.display = 'block';
+      document.getElementById('btn-cancel').style.display = 'block';
+
+      window.scrollTo({ top: 320, behavior: 'smooth' });
+      render();
+    }
+
+    function saveEdit() {
+      if (editingIndex === -1) return;
+
+      const name = document.getElementById('name').value.trim();
+      const price = parseFloat(document.getElementById('price').value);
+      const cycle = document.getElementById('cycle').value;
+      const category = document.getElementById('category').value;
+
+      if (!name || isNaN(price) || price <= 0) {
+        alert("请输入有效的名称和金额");
+        return;
+      }
+
+      getCurrentItems()[editingIndex] = { name, price, cycle, category };
+      cancelEdit();
+      saveAndRender();
+    }
+
+    function cancelEdit() {
+      editingIndex = -1;
+      clearForm();
+      document.getElementById('form-title').innerText = "添加订阅";
+      document.getElementById('btn-add').style.display = 'block';
+      document.getElementById('btn-save').style.display = 'none';
+      document.getElementById('btn-cancel').style.display = 'none';
+      render();
+    }
+
+    function clearForm() {
+      document.getElementById('name').value = '';
+      document.getElementById('price').value = '';
+    }
+
+    function clearCurrentMonth() {
+      if (confirm(`确定要清空 ${currentMonth} 的所有记录吗？`)) {
+        allRecords[currentMonth] = [];
+        saveAndRender();
+      }
+    }
+
+    function toggleImportCard(show) {
+      document.getElementById('import-card').style.display = show ? 'block' : 'none';
+      document.getElementById('show-import-btn').style.display = show ? 'none' : 'block';
+    }
+
+    function handleImportText() {
+      const text = document.getElementById('import-text').value.trim();
+      if (!text) return;
+
+      const items = getCurrentItems();
+
+      if (text.startsWith('[') && text.endsWith(']')) {
+        try {
+          const parsed = JSON.parse(text);
+          parsed.forEach(p => {
+            if (p.name && p.price) {
+              items.unshift({
+                name: p.name,
+                price: parseFloat(p.price),
+                cycle: p.cycle || 'monthly',
+                category: p.category || '其他'
+              });
+            }
+          });
+          document.getElementById('import-text').value = '';
+          toggleImportCard(false);
+          saveAndRender();
+          return;
+        } catch (e) {}
+      }
+
+      const lines = text.split('\n');
+      lines.forEach(line => {
+        const parts = line.split(/[,，]/).map(s => s.trim());
+        if (parts.length >= 2) {
+          const name = parts[0];
+          const price = parseFloat(parts[1]);
+          const category = parts[2] || '其他';
+          if (name && !isNaN(price)) {
+            items.unshift({ name, price, cycle: 'monthly', category });
+          }
+        }
+      });
+
+      document.getElementById('import-text').value = '';
+      toggleImportCard(false);
+      saveAndRender();
+    }
+
+    function copyPrompt() {
+      const promptText = document.getElementById('prompt-text');
+      promptText.select();
+      document.execCommand('copy');
+      alert("提示词已复制！现在您可以去 Gemini 粘贴使用了。");
+    }
+
+    render();
+  </script>
+</body>
+</html>
