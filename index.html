@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>暖流 · 现金流</title>
   <meta name="description" content="每天一分钟，看清自己有多少钱、多少可以用。">
-  <meta name="theme-color" content="#FFF6EC">
+  <meta name="theme-color" content="#F2F2F7">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="暖流">
@@ -15,15 +15,8 @@
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
-
-  <header class="topbar">
-    <img src="icons/icon.svg" alt="" class="brand-mark" width="34" height="34">
-    <div class="brand-text">
-      <strong id="page-title">暖流</strong>
-      <span id="page-sub"></span>
-    </div>
-  </header>
+  <header class="navbar"><strong id="nav-title"></strong></header>
+  <div class="large-title"><span id="page-sub"></span><h1 id="page-title">暖流</h1></div>
 
   <main id="view" tabindex="-1"></main>
 
@@ -35,7 +28,7 @@
       <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M8.500 3v4M15.500 3v4"/></svg><span>开销</span>
     </a>
     <a href="#entry" data-tab="entry" class="tab-main" aria-label="记录今天的余额">
-      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      <svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg><span>记录</span>
     </a>
     <a href="#income" data-tab="income">
       <svg viewBox="0 0 24 24"><path d="M4 17l5-5 4 3 7-8"/><path d="M15 7h5v5"/></svg><span>收入</span>

@@ -40,6 +40,8 @@
   };
   const cleanDomain = (v) => String(v || '').trim().toLowerCase().replace(/^[a-z]+:\/\//, '').replace(/^www\./, '').split(/[/?#\s]/)[0];
 
+  const haptic = (ms = 8) => { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* 不支持就算了 */ } };
+
   let toastTimer;
   function toast(msg) {
     const t = $('#toast');
@@ -128,8 +130,7 @@
     root.innerHTML = `
       <div class="sheet-backdrop"></div>
       <form class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}">
-        <div class="sheet-grip"></div>
-        <h2>${esc(title)}</h2>
+        <div class="sheet-drag"><div class="sheet-grip"></div><h2>${esc(title)}</h2></div>
         ${intro ? `<p class="sheet-intro">${intro}</p>` : ''}
         ${fieldHtml}
         ${extra || ''}
@@ -139,8 +140,28 @@
           <button type="submit" class="btn primary">${esc(saveLabel)}</button>
         </div>
       </form>`;
-    const close = () => { root.innerHTML = ''; };
     const form = $('.sheet', root);
+    const clear = () => { if (root.contains(form)) root.innerHTML = ''; root.classList.remove('closing'); };
+    const close = () => {
+      if (reduceMotion) { clear(); return; }
+      root.classList.add('closing');
+      setTimeout(clear, 280);
+    };
+    // 像 iOS 一样可以往下拖动关闭
+    const drag = $('.sheet-drag', root);
+    let startY = null;
+    drag.addEventListener('pointerdown', (e) => { startY = e.clientY; form.classList.add('dragging'); drag.setPointerCapture(e.pointerId); });
+    drag.addEventListener('pointermove', (e) => { if (startY !== null) form.style.transform = `translateY(${Math.max(0, e.clientY - startY)}px)`; });
+    const endDrag = (e) => {
+      if (startY === null) return;
+      const dy = e.clientY - startY;
+      startY = null;
+      form.classList.remove('dragging');
+      if (dy > 110) { form.style.transform = 'translateY(100%)'; root.classList.add('closing'); setTimeout(clear, 280); }
+      else form.style.transform = '';
+    };
+    drag.addEventListener('pointerup', endDrag);
+    drag.addEventListener('pointercancel', endDrag);
     $('.sheet-backdrop', root).onclick = close;
     $('[data-act="cancel"]', root).onclick = close;
     const del = $('[data-act="delete"]', root);
@@ -164,8 +185,8 @@
 
     if (!latest) {
       view.innerHTML = `
-        <section class="card hero welcome">
-          <img src="icons/icon.svg" alt="" width="72" height="72">
+        <section class="welcome">
+          <img src="icons/icon.svg" alt="" width="76" height="76">
           <h1>欢迎来到暖流</h1>
           <p>每天花一分钟输入各账户的余额，<br>这里会自动帮你加总，让你一眼看清楚。</p>
           <a class="btn primary big" href="#entry">记录第一天的余额</a>
@@ -195,7 +216,7 @@
         <span class="notice-dot"></span>
         <span>今天还没记录 · 现在显示的是${relDay(latest)}的数字</span><b>去记录 ›</b></a>` : ''}
 
-      <section class="card hero">
+      <section class="hero">
         <div class="hero-label">总资产<span>${relDay(latest)}</span></div>
         <div id="hero-total" class="hero-total">${money(ui.shownTotal, 'hero-num')}</div>
         ${delta === null ? '' : `<div class="chip ${delta < 0 ? 'down' : 'up'}">${delta < 0 ? '▼' : '▲'} 较上次记录 ${signed(delta)}</div>`}
@@ -232,7 +253,7 @@
       <section class="card">
         <div class="card-head">
           <h3>每日走势</h3>
-          <div class="seg" role="group" aria-label="时间范围">
+          <div class="seg" role="group" aria-label="时间范围" style="--i:${[7, 30, 0].indexOf(ui.range)}"><i class="seg-thumb"></i>
             ${[[7, '7 天'], [30, '30 天'], [0, '全部']].map(([v, l]) => `<button type="button" data-range="${v}" class="${ui.range === v ? 'on' : ''}">${l}</button>`).join('')}
           </div>
         </div>
@@ -265,6 +286,8 @@
     $$('[data-range]').forEach((b) => (b.onclick = () => {
       ui.range = Number(b.dataset.range);
       $$('[data-range]').forEach((x) => x.classList.toggle('on', x === b));
+      b.parentNode.style.setProperty('--i', [7, 30, 0].indexOf(ui.range));
+      haptic();
       drawTrend();
     }));
     const fix = $('#fix-spend');
@@ -487,6 +510,7 @@
       const m = state.billMonths[ym] || (state.billMonths[ym] = {});
       const rec = m[b.dataset.pay] || (m[b.dataset.pay] = {});
       rec.paid = !rec.paid;
+      haptic();
       save(); render();
     }));
     $$('[data-edit]').forEach((b) => (b.onclick = () => editBill(b.dataset.edit, ym)));
@@ -581,6 +605,7 @@
       const m = state.incomeMonths[b.dataset.ym] || (state.incomeMonths[b.dataset.ym] = {});
       const rec = m[b.dataset.got] || (m[b.dataset.got] = {});
       rec.paid = !rec.paid;
+      haptic();
       save(); render();
     }));
     $$('[data-client]').forEach((b) => (b.onclick = () => editClient(b.dataset.client, b.dataset.ym)));
@@ -853,7 +878,7 @@
 
   /* ---------- 路由 ---------- */
   const TABS = {
-    home: { title: '暖流', render: renderHome },
+    home: { title: '总览', render: renderHome },
     entry: { title: '记录余额', render: renderEntry },
     bills: { title: '固定开销', render: renderBills },
     income: { title: '收入', render: renderIncome },
@@ -862,6 +887,7 @@
   function render() {
     const tab = TABS[ui.tab] ? ui.tab : 'home';
     $('#page-title').textContent = TABS[tab].title;
+    $('#nav-title').textContent = TABS[tab].title;
     $('#page-sub').textContent = dayLabel(todayStr());
     $$('.tabbar a').forEach((a) => a.classList.toggle('on', a.dataset.tab === tab));
     document.body.dataset.tab = tab;
@@ -891,6 +917,9 @@
       toast('无法读取本机存储，数据可能无法保存');
     }
     window.addEventListener('hashchange', onRoute);
+    const onScroll = () => document.body.classList.toggle('scrolled', window.scrollY > 46);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
     ui.tab = null;
     onRoute();
 

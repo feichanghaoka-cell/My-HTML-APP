@@ -29,7 +29,7 @@
     el.innerHTML = `
       <div class="donut-wrap">
         <svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" role="img" aria-label="资产占比环形图">
-          <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="rgba(120,80,50,.08)" stroke-width="${sw}"/>
+          <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" class="donut-track" stroke-width="${sw}"/>
           <g class="donut-arcs"><g transform="rotate(-90 ${size / 2} ${size / 2})">${arcs}</g></g>
         </svg>
         <div class="donut-center"><span class="dc-label">总资产</span><span class="dc-value">RM ${compact(total)}</span><span class="dc-pct"></span></div>
@@ -66,7 +66,7 @@
     const W = Math.max(280, el.clientWidth || 320);
     const padL = 6, padR = 6, headH = 26, plotH = 92, gapY = 22, axisH = 20;
     const series = [
-      { key: 'total', name: '总资产', color: '#F08A3C' },
+      { key: 'total', name: '总资产', color: '#FF9500' },
       { key: 'cash', name: '个人可用现金', color: '#EC6A45' },
     ];
     const H = series.length * (headH + plotH) + gapY * (series.length - 1) + axisH;
@@ -91,7 +91,7 @@
         <text x="${padL}" y="${top - 9}" class="tc-name"><tspan fill="${s.color}">● </tspan>${s.name}</text>
         <text x="${W - padR}" y="${top - 9}" text-anchor="end" class="tc-val" data-val="${s.key}">RM ${fmt(vals[vals.length - 1])}</text>
         ${[hi, lo].map((v) => `<line x1="${padL}" x2="${W - padR}" y1="${yOf(v).toFixed(1)}" y2="${yOf(v).toFixed(1)}" class="tc-grid"/>
-          <text x="${padL}" y="${(yOf(v) + (v === hi ? 12 : -5)).toFixed(1)}" class="tc-tick">${compact(v)}</text>`).join('')}
+          <text x="${W - padR}" y="${(yOf(v) + (v === hi ? -4 : 11)).toFixed(1)}" text-anchor="end" class="tc-tick">${compact(v)}</text>`).join('')}
         ${points.length > 1 ? `<path d="${area}" fill="url(#tg-${s.key})"/><path d="${line}" class="tc-line" stroke="${s.color}"/>` : ''}
         <circle cx="${xs[xs.length - 1].toFixed(1)}" cy="${ys[ys.length - 1].toFixed(1)}" r="4" fill="${s.color}" class="tc-end"/>
         <circle r="5" fill="${s.color}" class="tc-dot" data-dot="${s.key}" visibility="hidden"/>`;
