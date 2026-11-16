@@ -601,9 +601,14 @@ function delTpl() {
 /* ---------- 备份 ---------- */
 function exportData() {
   const data = {app: 'gearkit', exportedAt: new Date().toISOString(), ...S, images: imgs};
+  const name = `器材库备份-${new Date().toLocaleDateString('sv')}.json`;
+  if (window.AndroidBridge) {   // 安卓安装包：直接写进系统「下载」文件夹
+    toast(AndroidBridge.saveFile(name, JSON.stringify(data)) ? '备份已保存到「下载」文件夹' : '导出失败');
+    return;
+  }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], {type: 'application/json'}));
-  a.download = `器材库备份-${new Date().toLocaleDateString('sv')}.json`;
+  a.download = name;
   document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   toast('备份已导出');
 }
