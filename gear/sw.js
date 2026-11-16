@@ -1,5 +1,5 @@
 // 器材库 Service Worker：离线可用
-const CACHE = 'gearkit-v2';
+const CACHE = 'gearkit-v3';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', e => {
