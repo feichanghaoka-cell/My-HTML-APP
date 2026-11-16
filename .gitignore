@@ -1,0 +1,4 @@
+android/.sdk/
+android/build/
+*.p12
+*.apk

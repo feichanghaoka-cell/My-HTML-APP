@@ -13,7 +13,25 @@
   let state = CF.defaultState();
   const ui = { tab: 'home', range: 30, billsYm: null, incomeYm: null, entryDate: null, shownTotal: 0, installEvt: null, periodic: null };
 
-  const save = () => CF.idbSet('state', state).catch(() => toast('保存失败：存储空间不可用'));
+  /* 安卓 APK 外壳提供的原生接口（网页版里不存在） */
+  const Native = window.NativeApp || null;
+  function nativeSync() {
+    if (!Native) return;
+    const today = todayStr();
+    const dates = CF.snapshotDates(state);
+    const bills = [today.slice(0, 7), CF.addMonths(today.slice(0, 7), 1)]
+      .flatMap((ym) => CF.billsForMonth(state, ym))
+      .filter((r) => !r.paid && r.amount > 0)
+      .map((r) => ({ name: r.bill.name, amount: r.amount, due: r.due }));
+    try {
+      Native.sync(JSON.stringify({
+        enabled: !!state.settings.reminderEnabled, time: state.settings.reminderTime || '21:00',
+        remindDays: Number(state.settings.billRemindDays) || 0, lastEntry: dates[dates.length - 1] || '', bills,
+      }));
+    } catch (e) { /* 旧版外壳没有这个接口 */ }
+  }
+
+  const save = () => CF.idbSet('state', state).then(nativeSync).catch(() => toast('保存失败：存储空间不可用'));
   const activeAccounts = () => state.accounts.filter((a) => !a.deleted);
   const typeOf = (id) => CF.TYPES.find((t) => t.id === id) || CF.TYPES[0];
 
@@ -52,6 +70,7 @@
   }
 
   function download(name, text, mime) {
+    if (Native) { Native.saveFile(name, mime.split(';')[0], text); return; }
     const url = URL.createObjectURL(new Blob([text], { type: mime }));
     const a = document.createElement('a');
     a.href = url;
@@ -651,7 +670,8 @@
   function renderSettings() {
     const s = state.settings;
     const accounts = activeAccounts();
-    const perm = 'Notification' in window ? Notification.permission : 'unsupported';
+    const perm = Native ? (Native.notificationsAllowed() ? 'granted' : 'default')
+      : 'Notification' in window ? Notification.permission : 'unsupported';
     const standalone = matchMedia('(display-mode: standalone)').matches;
     const notifState = perm === 'unsupported' ? '此浏览器不支持通知'
       : perm === 'denied' ? '通知权限已被拒绝，请到浏览器的网站设置里重新允许'
@@ -691,7 +711,8 @@
             ? '<button type="button" class="btn" id="notif-test">发一条测试通知</button><button type="button" class="btn ghost" id="notif-off">关闭通知</button>'
             : `<button type="button" class="btn primary" id="notif-on" ${perm === 'unsupported' ? 'disabled' : ''}>开启通知</button>`}
         </div>
-        <div class="callout">
+        ${Native ? '<p class="fine">提醒由手机系统的闹钟发出，App 关闭后也会响。如果收不到，请在系统设置里允许暖流的通知，并把它从“休眠应用”里移除。</p>' : ''}
+        <div class="callout" ${Native ? 'hidden' : ''}>
           <strong>关于通知的可靠性</strong>
           <p>网页 App 没有自己的服务器时，安卓不保证准时推送：App 开着或刚在后台时会准时提醒；完全关闭后，要靠系统的“定期后台同步”，时间由系统决定，可能延迟或不触发${ui.periodic === false ? '（当前环境未授予后台同步，需要先安装到主屏幕）' : ''}。</p>
           <p>想要每天 ${esc(s.reminderTime)} <b>一定</b>响，建议再加一个日历提醒，点通知里的链接就能直接打开输入页：</p>
@@ -713,7 +734,7 @@
         <input type="file" id="imp-file" accept="application/json,.json" hidden>
       </section>
 
-      <section class="card">
+      <section class="card" ${Native ? 'hidden' : ''}>
         <h3>安装到主屏幕</h3>
         ${standalone ? '<p class="muted">已经作为 App 安装 ✓</p>'
           : ui.installEvt ? '<button type="button" class="btn primary" id="install">安装暖流</button>'
@@ -741,6 +762,7 @@
     if (on) on.onclick = enableReminders;
     if (off) off.onclick = () => { state.settings.reminderEnabled = false; save(); render(); };
     if (test) test.onclick = async () => {
+      if (Native) { Native.testNotification(); return; }
       const reg = await navigator.serviceWorker.ready;
       reg.showNotification('暖流测试通知', { body: '看到这条就代表通知可以正常显示。', icon: './icons/icon-192.png', badge: './icons/badge.png', tag: 'test', data: { hash: '#entry' } });
     };
@@ -842,7 +864,17 @@
   }
 
   /* ---------- 通知 ---------- */
+  // 原生外壳：权限弹窗有结果后回调这里
+  window.onNativeNotif = (granted) => {
+    state.settings.reminderEnabled = !!granted;
+    save();
+    toast(granted ? '通知已开启 ✓' : '没有获得通知权限');
+    render();
+  };
+  window.onNativeSaved = (ok) => toast(ok ? '文件已保存 ✓' : '没有保存');
+
   async function enableReminders() {
+    if (Native) { Native.requestNotifications(); return; }
     if (!('Notification' in window) || !('serviceWorker' in navigator)) { toast('此浏览器不支持通知'); return; }
     const p = await Notification.requestPermission();
     if (p !== 'granted') { toast('没有获得通知权限'); render(); return; }
@@ -923,7 +955,8 @@
     ui.tab = null;
     onRoute();
 
-    if ('serviceWorker' in navigator) {
+    nativeSync();
+    if (!Native && 'serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').then(() => {
         if (state.settings.reminderEnabled) registerPeriodic();
       }).catch(() => {});
