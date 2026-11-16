@@ -226,6 +226,10 @@
     const delta = prev ? t.total - CF.totalsOf(state, prev).total : null;
     const free = t.personal - bills.unpaid;
     const stale = latest !== today;
+    // 公积金和负债是后加的类型：有这类账户时才显示，免得多出空格子
+    const optional = (ty) => ty.id === 'epf' || ty.id === 'debt';
+    const hasType = (ty) => state.accounts.some((a) => a.type === ty.id && (!a.deleted || t[ty.id]));
+    const shownTypes = CF.TYPES.filter((ty) => !optional(ty) || hasType(ty));
 
     const due = CF.dueBills(state, today);
     const overdue = CF.overdueIncome(state, today);
@@ -239,6 +243,7 @@
         <div class="hero-label">总资产<span>${relDay(latest)}</span></div>
         <div id="hero-total" class="hero-total">${money(ui.shownTotal, 'hero-num')}</div>
         ${delta === null ? '' : `<div class="chip ${delta < 0 ? 'down' : 'up'}">${delta < 0 ? '▼' : '▲'} 较上次记录 ${signed(delta)}</div>`}
+        ${t.debt > 0 ? `<div class="net">净资产 <b>RM ${fmt(t.net)}</b><span>已扣掉负债 RM ${fmt(t.debt)}</span></div>` : ''}
       </section>
 
       <section class="card free">
@@ -256,11 +261,11 @@
       ${budgetCard(latest)}
 
       <section class="tiles">
-        ${CF.TYPES.map((ty) => `<div class="card tile">
+        ${shownTypes.map((ty) => `<div class="card tile">
           <span class="tile-dot" style="background:${ty.color}"></span>
           <span class="tile-label">${ty.label}</span>
           ${money(t[ty.id], 'tile-num')}
-          <span class="tile-pct">${t.total > 0 ? ((Math.max(0, t[ty.id]) / t.total) * 100).toFixed(1) : '0.0'}%</span>
+          <span class="tile-pct">${ty.liability ? '还欠的金额 · 不计入总资产' : (t.total > 0 ? ((Math.max(0, t[ty.id]) / t.total) * 100).toFixed(1) : '0.0') + '%'}</span>
         </div>`).join('')}
       </section>
 
@@ -300,7 +305,7 @@
     rollNumber($('#hero-total'), ui.shownTotal, t.total);
     ui.shownTotal = t.total;
 
-    Charts.donut($('#donut'), CF.TYPES.map((ty) => ({ label: ty.short, value: t[ty.id], color: ty.color })), t.total);
+    Charts.donut($('#donut'), shownTypes.filter((ty) => !ty.liability).map((ty) => ({ label: ty.short, value: t[ty.id], color: ty.color })), t.total);
     drawTrend();
     $$('[data-range]').forEach((b) => (b.onclick = () => {
       ui.range = Number(b.dataset.range);
@@ -431,7 +436,7 @@
       let total = 0, personal = 0, prevPersonal = 0;
       for (const a of accounts) {
         const v = parseNum(form.elements[a.id].value) || 0;
-        total += v;
+        if (a.type !== 'debt') total += v;
         if (a.type === 'personal') { personal += v; prevPersonal += Number(prevBal[a.id]) || 0; }
         const d = prev ? v - (Number(prevBal[a.id]) || 0) : 0;
         const em = $(`[data-id="${a.id}"] .row-delta`, form);
@@ -802,7 +807,7 @@
       title: id ? '编辑账户' : '添加账户',
       fields: [
         { key: 'name', label: '账户名称', value: a.name, placeholder: '例如 CIMB 个人' },
-        { key: 'type', label: '类型', type: 'select', value: a.type, options: CF.TYPES.map((t) => ({ value: t.id, label: t.label })), hint: '只有“个人可用现金”会用来推算每日花费。' },
+        { key: 'type', label: '类型', type: 'select', value: a.type, options: CF.TYPES.map((t) => ({ value: t.id, label: t.label })), hint: '只有“个人可用现金”会用来推算每日花费。负债（例如 PTPTN）填还欠多少钱，不计入总资产。' },
         { key: 'domain', label: '品牌网址（用来抓 logo，可留空）', value: a.domain, placeholder: '例如 cimb.com.my' },
       ],
       onSave: (v) => {
@@ -827,12 +832,12 @@
   /* ---------- 导出 ---------- */
   function buildCsv() {
     const q = (v) => `"${String(v).replace(/"/g, '""')}"`;
-    const head = ['日期', ...state.accounts.map((a) => a.name + (a.deleted ? '（已删除）' : '')), ...CF.TYPES.map((t) => t.label), '总资产', '当日花费'];
+    const head = ['日期', ...state.accounts.map((a) => a.name + (a.deleted ? '（已删除）' : '')), ...CF.TYPES.map((t) => t.label), '总资产', '净资产', '当日花费'];
     const lines = [head.map(q).join(',')];
     for (const d of CF.snapshotDates(state)) {
       const snap = state.snapshots[d], t = CF.totalsOf(state, d), s = CF.spendOf(state, d);
       lines.push([d, ...state.accounts.map((a) => (snap.balances[a.id] === undefined ? '' : snap.balances[a.id])),
-        ...CF.TYPES.map((ty) => t[ty.id].toFixed(2)), t.total.toFixed(2), s ? s.spend.toFixed(2) : ''].join(','));
+        ...CF.TYPES.map((ty) => t[ty.id].toFixed(2)), t.total.toFixed(2), t.net.toFixed(2), s ? s.spend.toFixed(2) : ''].join(','));
     }
     return '﻿' + lines.join('\r\n');
   }

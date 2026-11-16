@@ -1,7 +1,7 @@
 /* 暖流 Service Worker：离线缓存 + 提醒通知 */
 importScripts('./js/shared.js');
 
-const CACHE = 'nuanliu-v2';
+const CACHE = 'nuanliu-v3';
 const ICON_CACHE = 'nuanliu-icons-v1';
 const SHELL = [
   './', './index.html', './css/styles.css',

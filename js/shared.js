@@ -62,7 +62,11 @@
     { id: 'business', label: '公司现金', short: '公司现金', color: '#2E9C86' },
     { id: 'fd', label: '定存', short: '定存', color: '#DB9A12' },
     { id: 'stock', label: '股票 / 投资', short: '股票', color: '#8572DB' },
+    { id: 'epf', label: '公积金 / 退休金', short: '公积金', color: '#4E9A2E' },
+    // 负债：填“还欠多少”，不计入总资产，只用来算净资产
+    { id: 'debt', label: '负债（贷款）', short: '负债', color: '#8E8E93', liability: true },
   ];
+  const ASSET_TYPES = TYPES.filter((t) => !t.liability);
 
   /* ---------- 默认数据 ---------- */
   let seq = 0;
@@ -121,14 +125,15 @@
 
   function totalsOf(state, date) {
     const snap = state.snapshots[date];
-    const t = { personal: 0, business: 0, fd: 0, stock: 0, total: 0 };
+    const t = { personal: 0, business: 0, fd: 0, stock: 0, epf: 0, debt: 0, total: 0, net: 0 };
     if (!snap) return t;
     for (const a of state.accounts) {
       const v = Number(snap.balances[a.id]) || 0;
-      if (t[a.type] === undefined) continue;
+      if (t[a.type] === undefined || a.type === 'total' || a.type === 'net') continue;
       t[a.type] += v;
-      t.total += v;
+      if (a.type !== 'debt') t.total += v;
     }
+    t.net = t.total - t.debt;
     return t;
   }
 
@@ -213,7 +218,7 @@
 
   g.CF = {
     idbGet, idbSet, uid, ymd, ymOf, parseYmd, addDays, addMonths, diffDays, daysInMonth, dateInMonth,
-    TYPES, defaultState, normalize, snapshotDates, totalsOf, prevSnapshotDate, spendOf,
+    TYPES, ASSET_TYPES, defaultState, normalize, snapshotDates, totalsOf, prevSnapshotDate, spendOf,
     billsForMonth, billSummary, dueBills, incomeForMonth, overdueIncome, fmt,
   };
 })(self);
