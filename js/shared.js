@@ -77,7 +77,7 @@
     const bill = (name, category, domain) => ({ id: uid(), name, amount: 0, day: 1, category, domain: domain || '' });
     return {
       version: 1,
-      settings: { dailyBudget: 100, reminderEnabled: false, reminderTime: '21:00', billRemindDays: 3 },
+      settings: { dailyBudget: 100, reminderEnabled: false, reminderTime: '21:00', billRemindDays: 3, hideAmounts: true },
       accounts: [
         acc('Maybank 个人', 'personal', 'maybank2u.com.my'),
         acc('Maybank 公司', 'business', 'maybank2u.com.my'),

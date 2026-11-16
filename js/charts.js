@@ -2,8 +2,10 @@
 (function (g) {
   'use strict';
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const fmt = (n) => CF.fmt(n);
+  const api = { masked: false };
+  const fmt = (n) => (api.masked ? '••••' : CF.fmt(n));
   const compact = (n) => {
+    if (api.masked) return '••••';
     const a = Math.abs(n);
     if (a >= 1e6) return (n / 1e6).toFixed(a >= 1e7 ? 1 : 2) + 'M';
     if (a >= 1e4) return (n / 1e3).toFixed(1) + 'k';
@@ -154,5 +156,5 @@
     </div>`;
   }
 
-  g.Charts = { donut, trend, spendBars, compact };
+  g.Charts = Object.assign(api, { donut, trend, spendBars, compact });
 })(self);

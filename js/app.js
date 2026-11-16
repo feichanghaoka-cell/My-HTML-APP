@@ -5,13 +5,15 @@
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const fmt = CF.fmt;
+  const MASK = '••••';
+  // 隐藏金额时，所有显示用的数字都换成圆点（导出的文件不受影响）
+  const fmt = (n, digits) => (ui.masked ? MASK : CF.fmt(n, digits));
   const view = $('#view');
   const todayStr = () => CF.ymd(new Date());
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   let state = CF.defaultState();
-  const ui = { tab: 'home', range: 30, billsYm: null, incomeYm: null, entryDate: null, shownTotal: 0, installEvt: null, periodic: null };
+  const ui = { tab: 'home', range: 30, billsYm: null, incomeYm: null, entryDate: null, shownTotal: 0, installEvt: null, periodic: null, masked: false, draft: null, slide: 0 };
 
   /* 安卓 APK 外壳提供的原生接口（网页版里不存在） */
   const Native = window.NativeApp || null;
@@ -42,6 +44,7 @@
   };
   const numStr = (n) => (n === null || n === undefined || n === '' ? '' : String(Math.round(Number(n) * 100) / 100));
   const money = (n, cls = '') => {
+    if (ui.masked) return `<span class="money ${cls}"><span class="cur">RM</span><span class="int">${MASK}</span></span>`;
     const neg = n < -0.004;
     const [int, dec] = fmt(Math.abs(n)).split('.');
     return `<span class="money ${cls}">${neg ? '<span class="neg">−</span>' : ''}<span class="cur">RM</span><span class="int">${int}</span><span class="dec">.${dec}</span></span>`;
@@ -120,7 +123,7 @@
 
   /* ---------- 数字滚动 ---------- */
   function rollNumber(el, from, to, ms = 1100) {
-    if (reduceMotion || Math.abs(to - from) < 0.005) { el.innerHTML = money(to, 'hero-num'); return; }
+    if (ui.masked || reduceMotion || Math.abs(to - from) < 0.005) { el.innerHTML = money(to, 'hero-num'); return; }
     const start = performance.now();
     const step = (now) => {
       const p = Math.min(1, (now - start) / ms);
@@ -303,7 +306,8 @@
     `;
 
     rollNumber($('#hero-total'), ui.shownTotal, t.total);
-    ui.shownTotal = t.total;
+    if (!ui.masked) ui.shownTotal = t.total;
+    $('#hero-total').onclick = toggleMask;
 
     Charts.donut($('#donut'), shownTypes.filter((ty) => !ty.liability).map((ty) => ({ label: ty.short, value: t[ty.id], color: ty.color })), t.total);
     drawTrend();
@@ -397,7 +401,9 @@
     const existing = state.snapshots[date];
     const prev = CF.prevSnapshotDate(state, date);
     const prevBal = prev ? state.snapshots[prev].balances : {};
-    const base = existing ? existing.balances : prevBal;
+    // 输入到一半切去别的页面再回来，数字还在
+    const draft = ui.draft && ui.draft.date === date ? ui.draft.values : null;
+    const base = draft || (existing ? existing.balances : prevBal);
     const accounts = activeAccounts();
 
     view.innerHTML = `
@@ -447,7 +453,12 @@
       const spent = prevPersonal - personal;
       $('#entry-diff').textContent = prev ? (spent >= 0 ? `个人现金少了 RM ${fmt(spent)}` : `个人现金多了 RM ${fmt(-spent)}`) : '';
     };
-    form.addEventListener('input', recalc);
+    form.addEventListener('input', () => {
+      const values = {};
+      for (const a of accounts) values[a.id] = form.elements[a.id].value;
+      ui.draft = { date, values };
+      recalc();
+    });
     form.addEventListener('focusin', (e) => { if (e.target.select) e.target.select(); });
     form.addEventListener('keydown', (e) => {
       if (e.key !== 'Enter') return;
@@ -463,10 +474,11 @@
       save();
       if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
       ui.entryDate = null;
+      ui.draft = null;
       toast(date === today ? '已保存今天的余额 ✓' : `已保存 ${date}`);
       location.hash = '#home';
     };
-    $('#entry-date').onchange = (e) => { ui.entryDate = e.target.value || today; renderEntry(); };
+    $('#entry-date').onchange = (e) => { ui.entryDate = e.target.value || today; ui.draft = null; renderEntry(); };
     recalc();
   }
 
@@ -690,6 +702,13 @@
       </section>
 
       <section class="card">
+        <h3>隐私</h3>
+        <label class="field inline"><span>打开 App 时隐藏金额</span>
+          <input id="set-hide" type="checkbox" class="switch" role="switch" ${s.hideAmounts ? 'checked' : ''}></label>
+        <p class="fine">开启后，每次打开都先显示 ••••，点右上角的眼睛或总资产才显示数字。离开 App 超过一分钟会重新隐藏。</p>
+      </section>
+
+      <section class="card">
         <div class="card-head"><h3>账户</h3><span class="muted">${accounts.length} 个</span></div>
         <ul class="rows">${accounts.map((a, i) => {
           const ty = typeOf(a.type);
@@ -748,6 +767,7 @@
       </section>`;
 
     $('#set-budget').onchange = (e) => { state.settings.dailyBudget = Math.max(0, parseNum(e.target.value) || 0); save(); toast('已更新每日预算'); };
+    $('#set-hide').onchange = (e) => { state.settings.hideAmounts = e.target.checked; haptic(); save(); };
     $('#set-time').onchange = (e) => { state.settings.reminderTime = e.target.value || '21:00'; save(); scheduleReminder(); render(); };
     $('#set-days').onchange = (e) => { state.settings.billRemindDays = Math.min(15, Math.max(0, parseInt(e.target.value, 10) || 0)); save(); };
 
@@ -921,7 +941,41 @@
     income: { title: '收入', render: renderIncome },
     settings: { title: '设置', render: renderSettings },
   };
+  function toggleMask() {
+    ui.masked = !ui.masked;
+    haptic();
+    render();
+  }
+
+  const TAB_ORDER = ['home', 'bills', 'entry', 'income', 'settings'];
+  /** 左右滑动切换页面 */
+  function bindSwipe() {
+    let start = null;
+    document.addEventListener('touchstart', (e) => {
+      start = null;
+      if (e.touches.length !== 1 || $('#sheet-root').innerHTML) return;
+      // 走势图上的横向滑动是用来看数值的；输入框里是移动光标
+      if (e.target.closest('svg.trend, .seg, .tabbar') || e.target === document.activeElement) return;
+      start = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() };
+    }, { passive: true });
+    document.addEventListener('touchend', (e) => {
+      if (!start) return;
+      const dx = e.changedTouches[0].clientX - start.x;
+      const dy = e.changedTouches[0].clientY - start.y;
+      const quick = Date.now() - start.t < 700;
+      start = null;
+      if (!quick || Math.abs(dx) < 64 || Math.abs(dx) < Math.abs(dy) * 2) return;
+      const i = TAB_ORDER.indexOf(ui.tab) + (dx < 0 ? 1 : -1);
+      if (i < 0 || i >= TAB_ORDER.length) return;
+      ui.slide = dx < 0 ? 1 : -1;
+      haptic();
+      location.hash = '#' + TAB_ORDER[i];
+    }, { passive: true });
+  }
+
   function render() {
+    Charts.masked = ui.masked;
+    document.body.classList.toggle('masked', ui.masked);
     const tab = TABS[ui.tab] ? ui.tab : 'home';
     $('#page-title').textContent = TABS[tab].title;
     $('#nav-title').textContent = TABS[tab].title;
@@ -933,12 +987,13 @@
   function onRoute() {
     const tab = location.hash.replace('#', '') || 'home';
     if (tab !== ui.tab) {
-      if (tab === 'entry') ui.entryDate = null;
+      if (tab === 'entry' && !ui.draft) ui.entryDate = null;
       $('#sheet-root').innerHTML = '';
       window.scrollTo(0, 0);
-      view.classList.remove('enter');
+      view.classList.remove('enter', 'slide-next', 'slide-prev');
       void view.offsetWidth;
-      view.classList.add('enter');
+      view.classList.add(ui.slide > 0 ? 'slide-next' : ui.slide < 0 ? 'slide-prev' : 'enter');
+      ui.slide = 0;
     }
     ui.tab = tab;
     render();
@@ -953,6 +1008,9 @@
     } catch (e) {
       toast('无法读取本机存储，数据可能无法保存');
     }
+    ui.masked = !!state.settings.hideAmounts;
+    $('#eye').onclick = toggleMask;
+    bindSwipe();
     window.addEventListener('hashchange', onRoute);
     const onScroll = () => document.body.classList.toggle('scrolled', window.scrollY > 46);
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -972,8 +1030,15 @@
     scheduleReminder();
     document.addEventListener('visibilitychange', () => {
       // 输入到一半切去银行 App 再回来时，不能重绘把数字清掉
-      if (document.visibilityState === 'visible') { scheduleReminder(); if (ui.tab === 'home') render(); }
-      else if (ui.tab !== 'entry') askSwToCheck();
+      if (document.visibilityState === 'visible') {
+        scheduleReminder();
+        const away = Date.now() - (ui.hiddenAt || Date.now());
+        if (state.settings.hideAmounts && away > 60000 && !ui.masked) { ui.masked = true; render(); }
+        else if (ui.tab === 'home') render();
+      } else {
+        ui.hiddenAt = Date.now();
+        if (ui.tab !== 'entry') askSwToCheck();
+      }
     });
     window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); ui.installEvt = e; if (ui.tab === 'settings') render(); });
     let rt;

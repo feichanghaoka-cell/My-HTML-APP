@@ -15,7 +15,13 @@
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <header class="navbar"><strong id="nav-title"></strong></header>
+  <header class="navbar">
+    <strong id="nav-title"></strong>
+    <button type="button" id="eye" class="nav-btn" aria-label="显示或隐藏金额">
+      <svg class="eye-on" viewBox="0 0 24 24"><path d="M2.500 12s3.500-6.500 9.500-6.500S21.500 12 21.500 12s-3.500 6.500-9.500 6.500S2.500 12 2.500 12z"/><circle cx="12" cy="12" r="3"/></svg>
+      <svg class="eye-off" viewBox="0 0 24 24"><path d="M4 4l16 16M9.900 5.800A9.600 9.600 0 0 1 12 5.500c6 0 9.500 6.500 9.500 6.500a17 17 0 0 1-2.900 3.700M6.300 7.400A16.500 16.500 0 0 0 2.500 12s3.500 6.500 9.500 6.500c1.500 0 2.900-.400 4.100-1M9.900 9.900a3 3 0 0 0 4.200 4.200"/></svg>
+    </button>
+  </header>
   <div class="large-title"><span id="page-sub"></span><h1 id="page-title">暖流</h1></div>
 
   <main id="view" tabindex="-1"></main>
