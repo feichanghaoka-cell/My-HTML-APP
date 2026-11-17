@@ -116,7 +116,48 @@
     s.version = 1;
     s.settings = Object.assign({}, d.settings, s.settings || {});
     for (const k of ['accounts', 'bills', 'clients']) if (!Array.isArray(s[k])) s[k] = k === 'clients' ? [] : d[k];
-    for (const k of ['snapshots', 'billMonths', 'incomeMonths']) if (!s[k] || typeof s[k] !== 'object') s[k] = {};
+    for (const k of ['snapshots', 'billMonths', 'incomeMonths']) if (!s[k] || typeof s[k] !== 'object' || Array.isArray(s[k])) s[k] = {};
+
+    // 导入的文件可能被手动改过或损坏：只保留形状正确的数据
+    const str = (v, max = 80) => String(v == null ? '' : v).slice(0, max);
+    const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+    const day = (v, dflt) => Math.min(31, Math.max(1, parseInt(v, 10) || dflt));
+    const domain = (v) => (/^[a-z0-9.-]{1,80}$/i.test(String(v || '')) ? String(v).toLowerCase() : '');
+    const typeIds = TYPES.map((t) => t.id);
+    const okId = (o) => o && typeof o === 'object' && typeof o.id === 'string' && /^[\w-]{1,40}$/.test(o.id);
+
+    s.accounts = s.accounts.filter(okId).map((a) => ({
+      id: a.id, name: str(a.name), type: typeIds.includes(a.type) ? a.type : 'personal', domain: domain(a.domain),
+      ...(a.deleted ? { deleted: true } : {}),
+    }));
+    s.bills = s.bills.filter(okId).map((b) => ({
+      id: b.id, name: str(b.name), amount: num(b.amount), day: day(b.day, 1), category: str(b.category, 20) || '其他', domain: domain(b.domain),
+    }));
+    s.clients = s.clients.filter(okId).map((c) => ({
+      id: c.id, name: str(c.name), amount: num(c.amount), dueDay: day(c.dueDay, 28), domain: domain(c.domain),
+      ...(/^\d{4}-\d{2}$/.test(c.since) ? { since: c.since } : {}),
+    }));
+    for (const [date, snap] of Object.entries(s.snapshots)) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !snap || typeof snap.balances !== 'object' || !snap.balances) { delete s.snapshots[date]; continue; }
+      const balances = {};
+      for (const [id, v] of Object.entries(snap.balances)) balances[id] = num(v);
+      s.snapshots[date] = { balances, spendOverride: typeof snap.spendOverride === 'number' && Number.isFinite(snap.spendOverride) ? snap.spendOverride : null };
+    }
+    for (const k of ['billMonths', 'incomeMonths']) {
+      for (const [ym, recs] of Object.entries(s[k])) {
+        if (!/^\d{4}-\d{2}$/.test(ym) || !recs || typeof recs !== 'object') { delete s[k][ym]; continue; }
+        for (const [id, r] of Object.entries(recs)) {
+          if (!r || typeof r !== 'object') { delete recs[id]; continue; }
+          recs[id] = { paid: !!r.paid, ...(typeof r.amount === 'number' && Number.isFinite(r.amount) ? { amount: r.amount } : {}) };
+        }
+      }
+    }
+    const st = s.settings;
+    st.dailyBudget = Math.max(0, num(st.dailyBudget));
+    st.reminderTime = /^\d{2}:\d{2}$/.test(st.reminderTime) ? st.reminderTime : '21:00';
+    st.billRemindDays = Math.min(15, Math.max(0, parseInt(st.billRemindDays, 10) || 0));
+    st.reminderEnabled = !!st.reminderEnabled;
+    st.hideAmounts = !!st.hideAmounts;
     return s;
   }
 
@@ -153,7 +194,14 @@
     if (!snap) return null;
     const prev = prevSnapshotDate(state, date);
     if (!prev) return null;
-    const auto = totalsOf(state, prev).personal - totalsOf(state, date).personal;
+    // 只比较两天都有记录的个人账户：新增或删除账户不会被当成花费或进账
+    const a = state.snapshots[prev].balances, b = snap.balances;
+    let auto = 0;
+    for (const acc of state.accounts) {
+      if (acc.type !== 'personal' || !(acc.id in a) || !(acc.id in b)) continue;
+      auto += (Number(a[acc.id]) || 0) - (Number(b[acc.id]) || 0);
+    }
+    auto = Math.round(auto * 100) / 100;
     const days = Math.max(1, diffDays(prev, date));
     const overridden = typeof snap.spendOverride === 'number';
     const spend = overridden ? snap.spendOverride : auto;
@@ -180,14 +228,19 @@
     }
     return sum;
   }
-  /** 快到期或已过期但未付的本月开销 */
+  function remindDays(state) {
+    const n = Number(state.settings.billRemindDays);
+    return Number.isFinite(n) && n >= 0 ? n : 3;
+  }
+  /** 快到期或已过期但未付的开销：看上个月（逾期）、本月和下个月初（跨月） */
   function dueBills(state, today) {
-    const within = Number(state.settings.billRemindDays);
-    const n = Number.isFinite(within) ? within : 3;
-    return billsForMonth(state, today.slice(0, 7))
+    const n = remindDays(state);
+    const ym = today.slice(0, 7);
+    return [addMonths(ym, -1), ym, addMonths(ym, 1)]
+      .flatMap((m) => billsForMonth(state, m))
       .filter((r) => !r.paid && r.amount > 0)
       .map((r) => Object.assign(r, { daysLeft: diffDays(today, r.due) }))
-      .filter((r) => r.daysLeft <= n);
+      .filter((r) => r.daysLeft <= n && r.daysLeft >= -31);
   }
 
   /* ---------- 收入（仅参照） ---------- */
@@ -219,6 +272,6 @@
   g.CF = {
     idbGet, idbSet, uid, ymd, ymOf, parseYmd, addDays, addMonths, diffDays, daysInMonth, dateInMonth,
     TYPES, ASSET_TYPES, defaultState, normalize, snapshotDates, totalsOf, prevSnapshotDate, spendOf,
-    billsForMonth, billSummary, dueBills, incomeForMonth, overdueIncome, fmt,
+    billsForMonth, billSummary, dueBills, remindDays, incomeForMonth, overdueIncome, fmt,
   };
 })(self);

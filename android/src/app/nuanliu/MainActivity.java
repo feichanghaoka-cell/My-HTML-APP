@@ -77,9 +77,10 @@ public class MainActivity extends Activity {
         ReminderReceiver.schedule(this);
     }
 
+    /** 只接受 #home、#entry 这类页面名；其它 App 传进来的任何别的内容一律忽略 */
     private static String hashOf(Intent i) {
         String h = i == null ? null : i.getStringExtra(EXTRA_HASH);
-        return h == null ? "" : h;
+        return h != null && h.matches("#[a-z]{1,16}") ? h : "";
     }
 
     @Override

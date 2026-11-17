@@ -339,6 +339,7 @@ body[data-tab="entry"] { padding-bottom: calc(var(--tabbar-h) + var(--safe-b) + 
 .sheet.dragging { transition: none; }
 .sheet:not(.dragging) { transition: transform .4s var(--spring); }
 .closing .sheet { animation: sheet-down .3s ease-in both; }
+.closing .sheet, .closing .sheet-backdrop { pointer-events: none; } /* 关闭动画期间点击直接落到下面的页面 */
 .closing .sheet-backdrop { animation: fade .3s reverse both; }
 .sheet-grip { width: 36px; height: 5px; border-radius: 9px; background: var(--ink-3); margin: 0 auto 12px; }
 .sheet-drag { touch-action: none; cursor: grab; margin: -6px -16px 0; padding: 6px 16px 4px; }

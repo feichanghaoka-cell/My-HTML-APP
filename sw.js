@@ -1,7 +1,7 @@
 /* 暖流 Service Worker：离线缓存 + 提醒通知 */
 importScripts('./js/shared.js');
 
-const CACHE = 'nuanliu-v4';
+const CACHE = 'nuanliu-v5';
 const ICON_CACHE = 'nuanliu-icons-v1';
 const SHELL = [
   './', './index.html', './css/styles.css',
@@ -27,18 +27,23 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
 
   if (url.origin === self.location.origin) {
-    // 应用文件：联网时取最新，离线时用缓存
-    e.respondWith(
-      fetch(req)
-        .then((res) => {
-          if (res.ok) {
-            const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put(req, copy));
-          }
-          return res;
-        })
-        .catch(() => caches.match(req, { ignoreSearch: true }).then((r) => r || caches.match('./index.html')))
-    );
+    // 应用文件：联网时取最新；离线、或信号差超过 3 秒没回应时用缓存
+    const fromCache = () => caches.match(req, { ignoreSearch: true }).then((r) => r || caches.match('./index.html'));
+    const network = fetch(req).then((res) => {
+      if (res.ok) {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(req, copy));
+      }
+      return res;
+    });
+    e.respondWith(new Promise((resolve) => {
+      let done = false;
+      const finish = (r) => { if (!done && r) { done = true; resolve(r); } };
+      const timer = setTimeout(() => fromCache().then(finish), 3000);
+      network
+        .then((res) => { clearTimeout(timer); finish(res); })
+        .catch(() => { clearTimeout(timer); fromCache().then((r) => (r ? finish(r) : finish(Response.error()))); });
+    }));
     return;
   }
 

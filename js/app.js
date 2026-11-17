@@ -21,9 +21,10 @@
     if (!Native) return;
     const today = todayStr();
     const dates = CF.snapshotDates(state);
-    const bills = [today.slice(0, 7), CF.addMonths(today.slice(0, 7), 1)]
+    // 交给原生闹钟：除了本月和下月，也带上上个月没付的，跨月后照样提醒
+    const bills = [-1, 0, 1, 2].map((n) => CF.addMonths(today.slice(0, 7), n))
       .flatMap((ym) => CF.billsForMonth(state, ym))
-      .filter((r) => !r.paid && r.amount > 0)
+      .filter((r) => !r.paid && r.amount > 0 && CF.diffDays(r.due, today) <= 31)
       .map((r) => ({ name: r.bill.name, amount: r.amount, due: r.due }));
     try {
       Native.sync(JSON.stringify({
@@ -137,6 +138,7 @@
   /* ---------- 底部弹层表单 ---------- */
   function openSheet({ title, intro, fields = [], onSave, onDelete, saveLabel = '保存', deleteLabel = '删除', extra }) {
     const root = $('#sheet-root');
+    root.classList.remove('closing'); // 上一个弹层的关闭动画还没结束时，不能让新弹层继承它
     const fieldHtml = fields.map((f) => {
       const id = 'f-' + f.key;
       let control;
@@ -163,7 +165,11 @@
         </div>
       </form>`;
     const form = $('.sheet', root);
-    const clear = () => { if (root.contains(form)) root.innerHTML = ''; root.classList.remove('closing'); };
+    const clear = () => {
+      if (!root.contains(form)) return; // 已经换成新的弹层了，别碰它
+      root.innerHTML = '';
+      root.classList.remove('closing');
+    };
     const close = () => {
       if (reduceMotion) { clear(); return; }
       root.classList.add('closing');
@@ -423,7 +429,7 @@
             <div class="row-main"><strong>${esc(a.name)}</strong>
               <small><i class="type-dot" style="background:${ty.color}"></i>${ty.short}<em class="row-delta"></em></small></div>
             <div class="in-money"><span>RM</span><input type="text" inputmode="decimal" enterkeyhint="next" name="${a.id}"
-              value="${esc(numStr(base[a.id]))}" placeholder="0.00" aria-label="${esc(a.name)} 余额"></div>
+              value="${esc(draft ? (draft[a.id] == null ? '' : draft[a.id]) : numStr(base[a.id]))}" placeholder="0.00" aria-label="${esc(a.name)} 余额"></div>
           </label>`;
         }).join('')}
         ${accounts.length ? '' : '<p class="empty">还没有账户，先到设置里添加。</p>'}
@@ -468,7 +474,8 @@
     });
     form.onsubmit = (e) => {
       e.preventDefault();
-      const balances = {};
+      // 先保留这一天原有的数字（包括已删除账户的），再写入这次输入的
+      const balances = Object.assign({}, existing ? existing.balances : {});
       for (const a of accounts) balances[a.id] = parseNum(form.elements[a.id].value) || 0;
       state.snapshots[date] = { balances, spendOverride: existing && typeof existing.spendOverride === 'number' ? existing.spendOverride : null };
       save();
@@ -506,7 +513,7 @@
     const isCurrent = ym === today.slice(0, 7);
     const row = (r) => {
       const left = CF.diffDays(today, r.due);
-      const remindDays = Number(state.settings.billRemindDays) || 3;
+      const remindDays = CF.remindDays(state);
       const status = r.paid ? '<span class="tag ok">✓ 已付</span>'
         : r.amount > 0 && isCurrent && left <= remindDays ? dueText(left) : '';
       return `<li class="row ${r.paid ? 'paid' : ''}">
@@ -881,8 +888,10 @@
   }
   function buildIcs() {
     const { start, end } = reminderStamp();
+    // DTSTAMP 按规范必须是 UTC 时间（结尾带 Z）
+    const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
     return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Nuanliu//Cashflow//ZH', 'BEGIN:VEVENT',
-      `UID:nuanliu-daily-${Date.now()}@nuanliu`, `DTSTAMP:${start}`, `DTSTART:${start}`, `DTEND:${end}`,
+      `UID:nuanliu-daily-${Date.now()}@nuanliu`, `DTSTAMP:${stamp}`, `DTSTART:${start}`, `DTEND:${end}`,
       'RRULE:FREQ=DAILY', 'SUMMARY:暖流：记录今天的余额', `DESCRIPTION:打开输入页：${appUrl()}`, `URL:${appUrl()}`,
       'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:记录今天的余额', 'TRIGGER:PT0M', 'END:VALARM',
       'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
