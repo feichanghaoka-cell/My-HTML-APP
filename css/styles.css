@@ -109,6 +109,18 @@ main.enter { animation: page-in .28s ease-out both; }
 .net { margin-top: 8px; font-size: 15px; color: var(--ink-2); display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
 .net b { color: var(--ink); font-family: var(--rounded); font-weight: 600; }
 .net span { font-size: 13px; color: var(--ink-3); }
+.debt { display: flex; flex-direction: column; }
+.debt-num { font-size: 32px; }
+.debt .chip { margin-top: 2px; font-size: 14px; }
+.debt .chip.down { color: var(--bad); }
+.debt .chip.up { color: var(--good); }
+.debt-rows { margin-top: 10px; }
+.row-amt.cleared { color: var(--good); }
+.bad-text { color: var(--bad); font-weight: 600; }
+.good-text { color: var(--good); font-weight: 600; }
+.entry-form { display: flex; flex-direction: column; gap: 10px; }
+.entry-group { font-size: 13px; font-weight: 600; color: var(--ink-2); padding: 6px 16px 0; }
+.btn.add + .btn.add { margin-top: 0; }
 
 .welcome { background: var(--card); border-radius: 20px; text-align: center; padding: 36px 22px 28px; }
 .welcome img { border-radius: 16px; }

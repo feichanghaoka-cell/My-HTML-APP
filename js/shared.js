@@ -129,6 +129,7 @@
     s.accounts = s.accounts.filter(okId).map((a) => ({
       id: a.id, name: str(a.name), type: typeIds.includes(a.type) ? a.type : 'personal', domain: domain(a.domain),
       ...(a.deleted ? { deleted: true } : {}),
+      ...(a.type === 'debt' && a.excludeSpend ? { excludeSpend: true } : {}),
     }));
     s.bills = s.bills.filter(okId).map((b) => ({
       id: b.id, name: str(b.name), amount: num(b.amount), day: day(b.day, 1), category: str(b.category, 20) || '其他', domain: domain(b.domain),
@@ -188,18 +189,41 @@
     return prev;
   }
 
+  /** 这笔负债的增减是否算进每日花费（默认算；例如不想算的可以在账户里关掉） */
+  const spendsViaDebt = (acc) => acc.type === 'debt' && !acc.excludeSpend;
+
+  /** 常见负债，可以在设置里一键添加 */
+  const DEBT_PRESETS = [
+    { name: 'Maybank 信用卡 1', domain: 'maybank2u.com.my', kind: '信用卡' },
+    { name: 'Maybank 信用卡 2', domain: 'maybank2u.com.my', kind: '信用卡' },
+    { name: 'Hong Leong 信用卡 1', domain: 'hlb.com.my', kind: '信用卡' },
+    { name: 'Hong Leong 信用卡 2', domain: 'hlb.com.my', kind: '信用卡' },
+    { name: 'SPayLater', domain: 'shopee.com.my', kind: '分期' },
+    { name: 'Atomy 分期', domain: 'atomy.com', kind: '分期' },
+    { name: '车贷', domain: '', kind: '贷款', match: ['车贷'] },
+    { name: 'PTPTN 学贷', domain: 'ptptn.gov.my', kind: '贷款', match: ['PTPTN', '学贷'] },
+  ];
+  /** 还没建的常见负债（按名称判断，避免重复） */
+  function missingDebtPresets(state) {
+    const names = state.accounts.filter((a) => !a.deleted).map((a) => a.name.toLowerCase());
+    return DEBT_PRESETS.filter((p) => !(p.match || [p.name]).some((m) => names.some((n) => n.includes(m.toLowerCase()))));
+  }
+
   /** 某天的花费：个人可用现金比上一次记录少了多少（可被手动修正覆盖） */
   function spendOf(state, date) {
     const snap = state.snapshots[date];
     if (!snap) return null;
     const prev = prevSnapshotDate(state, date);
     if (!prev) return null;
-    // 只比较两天都有记录的个人账户：新增或删除账户不会被当成花费或进账
+    // 只比较两天都有记录的账户：新增或删除账户不会被当成花费或进账
     const a = state.snapshots[prev].balances, b = snap.balances;
     let auto = 0;
     for (const acc of state.accounts) {
-      if (acc.type !== 'personal' || !(acc.id in a) || !(acc.id in b)) continue;
-      auto += (Number(a[acc.id]) || 0) - (Number(b[acc.id]) || 0);
+      if (!(acc.id in a) || !(acc.id in b)) continue;
+      const diff = (Number(a[acc.id]) || 0) - (Number(b[acc.id]) || 0);
+      if (acc.type === 'personal') auto += diff; // 个人现金少了 = 花了
+      // 负债多了 = 花了（刷卡、分期）；负债少了 = 用现金还款，抵消掉现金的减少，不算花费
+      else if (spendsViaDebt(acc)) auto -= diff;
     }
     auto = Math.round(auto * 100) / 100;
     const days = Math.max(1, diffDays(prev, date));
@@ -271,7 +295,7 @@
 
   g.CF = {
     idbGet, idbSet, uid, ymd, ymOf, parseYmd, addDays, addMonths, diffDays, daysInMonth, dateInMonth,
-    TYPES, ASSET_TYPES, defaultState, normalize, snapshotDates, totalsOf, prevSnapshotDate, spendOf,
+    TYPES, ASSET_TYPES, DEBT_PRESETS, missingDebtPresets, spendsViaDebt, defaultState, normalize, snapshotDates, totalsOf, prevSnapshotDate, spendOf,
     billsForMonth, billSummary, dueBills, remindDays, incomeForMonth, overdueIncome, fmt,
   };
 })(self);

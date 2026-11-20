@@ -239,6 +239,7 @@
     const optional = (ty) => ty.id === 'epf' || ty.id === 'debt';
     const hasType = (ty) => state.accounts.some((a) => a.type === ty.id && (!a.deleted || t[ty.id]));
     const shownTypes = CF.TYPES.filter((ty) => !optional(ty) || hasType(ty));
+    const tileTypes = shownTypes.filter((ty) => !ty.liability); // 负债有自己的卡片
 
     const due = CF.dueBills(state, today);
     const overdue = CF.overdueIncome(state, today);
@@ -270,13 +271,15 @@
       ${budgetCard(latest)}
 
       <section class="tiles">
-        ${shownTypes.map((ty) => `<div class="card tile">
+        ${tileTypes.map((ty) => `<div class="card tile">
           <span class="tile-dot" style="background:${ty.color}"></span>
           <span class="tile-label">${ty.label}</span>
           ${money(t[ty.id], 'tile-num')}
           <span class="tile-pct">${ty.liability ? '还欠的金额 · 不计入总资产' : (t.total > 0 ? ((Math.max(0, t[ty.id]) / t.total) * 100).toFixed(1) : '0.0') + '%'}</span>
         </div>`).join('')}
       </section>
+
+      ${debtCard(latest, prev)}
 
       <section class="card">
         <h3>资产占比</h3>
@@ -328,6 +331,33 @@
     if (fix) fix.onclick = () => openSpendFix(latest);
   }
 
+  /** 总览里的负债卡片：每笔还欠多少、比上次多了还是少了 */
+  function debtCard(date, prev) {
+    const debts = state.accounts.filter((a) => a.type === 'debt' && (!a.deleted || Number(state.snapshots[date].balances[a.id])));
+    if (!debts.length) return '';
+    const now = state.snapshots[date].balances;
+    const before = prev ? state.snapshots[prev].balances : null;
+    let total = 0, change = 0;
+    const rows = debts.map((a) => {
+      const v = Number(now[a.id]) || 0;
+      total += v;
+      const d = before && a.id in before && a.id in now ? v - (Number(before[a.id]) || 0) : 0;
+      change += d;
+      const dTxt = Math.abs(d) > 0.004 ? `<span class="${d > 0 ? 'bad-text' : 'good-text'}">${d > 0 ? '多了' : '还了'} RM ${fmt(Math.abs(d))}</span>` : '';
+      return { a, v, html: `<li class="row">
+        ${logo(a.name, a.domain)}
+        <div class="row-main"><strong>${esc(a.name)}</strong><small>${dTxt || (v > 0 ? '没有变动' : '目前没有欠款')}</small></div>
+        <div class="row-amt ${v > 0 ? '' : 'cleared'}">${v > 0 ? 'RM ' + fmt(v) : '✓'}</div></li>` };
+    }).sort((x, y) => y.v - x.v);
+    return `<section class="card debt">
+      <div class="card-head"><h3>负债</h3><span class="muted">还欠的总额</span></div>
+      ${money(total, 'debt-num')}
+      ${Math.abs(change) > 0.004 ? `<div class="chip ${change > 0 ? 'down' : 'up'}">${change > 0 ? '▲ 比上次多欠' : '▼ 比上次少欠'} RM ${fmt(Math.abs(change))}</div>` : ''}
+      <ul class="rows debt-rows">${rows.map((r) => r.html).join('')}</ul>
+      <p class="fine">负债不计入总资产，只用来算净资产。信用卡、分期刷了算花费，用现金还款不算。</p>
+    </section>`;
+  }
+
   function drawTrend() {
     const today = todayStr();
     const from = ui.range ? CF.addDays(today, -(ui.range - 1)) : '';
@@ -375,7 +405,7 @@
       <div class="bar"><i style="width:${pct}%"></i></div>
       <div class="budget-foot">
         <span>预算 RM ${fmt(s.budget, 0)}${s.days > 1 ? `（距上次记录 ${s.days} 天）` : ' / 天'}</span>
-        <span>只看个人可用现金</span>
+        <span>${state.accounts.some((a) => !a.deleted && CF.spendsViaDebt(a)) ? '个人现金 + 信用卡 / 分期' : '只看个人可用现金'}</span>
       </div>
       ${Charts.spendBars(week, daily)}
     </section>`;
@@ -411,6 +441,18 @@
     const draft = ui.draft && ui.draft.date === date ? ui.draft.values : null;
     const base = draft || (existing ? existing.balances : prevBal);
     const accounts = activeAccounts();
+    const assetAccounts = accounts.filter((a) => a.type !== 'debt');
+    const debtAccounts = accounts.filter((a) => a.type === 'debt');
+    const entryRow = (a) => {
+      const ty = typeOf(a.type);
+      return `<label class="entry-row" data-id="${a.id}">
+            ${logo(a.name, a.domain)}
+            <div class="row-main"><strong>${esc(a.name)}</strong>
+              <small><i class="type-dot" style="background:${ty.color}"></i>${ty.short}<em class="row-delta"></em></small></div>
+            <div class="in-money"><span>RM</span><input type="text" inputmode="decimal" enterkeyhint="next" name="${a.id}"
+              value="${esc(draft ? (draft[a.id] == null ? '' : draft[a.id]) : numStr(base[a.id]))}" placeholder="0.00" aria-label="${esc(a.name)} ${a.type === 'debt' ? '还欠' : '余额'}"></div>
+          </label>`;
+    };
 
     view.innerHTML = `
       <section class="card entry-head">
@@ -421,18 +463,13 @@
         <p class="muted">${existing ? '这一天已经记录过，可以直接修改。' : prev ? `已填好${relDay(prev)}的数字，只改有变动的就好。` : '输入每个账户现在的余额。'}</p>
       </section>
 
-      <form id="entry-form" class="card entry-list" autocomplete="off">
-        ${accounts.map((a) => {
-          const ty = typeOf(a.type);
-          return `<label class="entry-row" data-id="${a.id}">
-            ${logo(a.name, a.domain)}
-            <div class="row-main"><strong>${esc(a.name)}</strong>
-              <small><i class="type-dot" style="background:${ty.color}"></i>${ty.short}<em class="row-delta"></em></small></div>
-            <div class="in-money"><span>RM</span><input type="text" inputmode="decimal" enterkeyhint="next" name="${a.id}"
-              value="${esc(draft ? (draft[a.id] == null ? '' : draft[a.id]) : numStr(base[a.id]))}" placeholder="0.00" aria-label="${esc(a.name)} 余额"></div>
-          </label>`;
-        }).join('')}
-        ${accounts.length ? '' : '<p class="empty">还没有账户，先到设置里添加。</p>'}
+      <form id="entry-form" autocomplete="off" class="entry-form">
+        <div class="card entry-list">
+          ${assetAccounts.map(entryRow).join('')}
+          ${accounts.length ? '' : '<p class="empty">还没有账户，先到设置里添加。</p>'}
+        </div>
+        ${debtAccounts.length ? `<h3 class="entry-group">负债 · 填还欠多少</h3>
+        <div class="card entry-list">${debtAccounts.map(entryRow).join('')}</div>` : ''}
       </form>
 
       <div class="savebar">
@@ -445,19 +482,23 @@
 
     const form = $('#entry-form');
     const recalc = () => {
-      let total = 0, personal = 0, prevPersonal = 0;
+      let total = 0, spent = 0;
       for (const a of accounts) {
         const v = parseNum(form.elements[a.id].value) || 0;
         if (a.type !== 'debt') total += v;
-        if (a.type === 'personal') { personal += v; prevPersonal += Number(prevBal[a.id]) || 0; }
-        const d = prev ? v - (Number(prevBal[a.id]) || 0) : 0;
+        const had = prev && a.id in prevBal;
+        const d = had ? v - (Number(prevBal[a.id]) || 0) : 0;
+        // 和总览的每日花费用同一套算法
+        if (a.type === 'personal') spent -= d;
+        else if (CF.spendsViaDebt(a)) spent += d;
         const em = $(`[data-id="${a.id}"] .row-delta`, form);
         em.textContent = Math.abs(d) > 0.004 ? ` · ${signed(d)}` : '';
-        em.className = 'row-delta ' + (d < 0 ? 'down' : 'up');
+        // 负债增加是坏事，颜色反过来
+        const bad = a.type === 'debt' ? d > 0 : d < 0;
+        em.className = 'row-delta ' + (bad ? 'down' : 'up');
       }
       $('#entry-total').textContent = 'RM ' + fmt(total);
-      const spent = prevPersonal - personal;
-      $('#entry-diff').textContent = prev ? (spent >= 0 ? `个人现金少了 RM ${fmt(spent)}` : `个人现金多了 RM ${fmt(-spent)}`) : '';
+      $('#entry-diff').textContent = prev ? (spent >= 0 ? `这次约花了 RM ${fmt(spent)}` : `个人现金多了 RM ${fmt(-spent)}`) : '';
     };
     form.addEventListener('input', () => {
       const values = {};
@@ -730,6 +771,7 @@
             </div></li>`;
         }).join('')}</ul>
         <button type="button" class="btn add" id="add-acc">＋ 添加账户</button>
+        ${CF.missingDebtPresets(state).length ? `<button type="button" class="btn add" id="add-debts">＋ 一键添加常用负债（${CF.missingDebtPresets(state).map((p) => esc(p.name)).join('、')}）</button>` : ''}
       </section>
 
       <section class="card">
@@ -780,6 +822,15 @@
 
     $$('[data-acc]').forEach((b) => (b.onclick = () => editAccount(b.dataset.acc)));
     $('#add-acc').onclick = () => editAccount(null);
+    const addDebts = $('#add-debts');
+    if (addDebts) addDebts.onclick = () => {
+      const list = CF.missingDebtPresets(state);
+      if (!confirm(`添加这 ${list.length} 个负债账户？\n${list.map((p) => '· ' + p.name).join('\n')}\n\n之后可以改名或删除不需要的。`)) return;
+      const items = list.map((p) => ({ id: CF.uid(), name: p.name, type: 'debt', domain: p.domain }));
+      const firstDeleted = state.accounts.findIndex((x) => x.deleted);
+      if (firstDeleted < 0) state.accounts.push(...items); else state.accounts.splice(firstDeleted, 0, ...items);
+      save(); haptic(); toast(`已添加 ${items.length} 个负债账户`); render();
+    };
     $$('[data-move]').forEach((b) => (b.onclick = () => {
       const list = activeAccounts();
       const i = list.findIndex((a) => a.id === b.dataset.id);
@@ -830,16 +881,21 @@
 
   function editAccount(id) {
     const a = id ? state.accounts.find((x) => x.id === id) : { name: '', type: 'personal', domain: '' };
+    const spendOpts = [{ value: 'yes', label: '算（信用卡、分期、贷款）' }, { value: 'no', label: '不算' }];
     openSheet({
       title: id ? '编辑账户' : '添加账户',
       fields: [
         { key: 'name', label: '账户名称', value: a.name, placeholder: '例如 CIMB 个人' },
         { key: 'type', label: '类型', type: 'select', value: a.type, options: CF.TYPES.map((t) => ({ value: t.id, label: t.label })), hint: '只有“个人可用现金”会用来推算每日花费。负债（例如 PTPTN）填还欠多少钱，不计入总资产。' },
         { key: 'domain', label: '品牌网址（用来抓 logo，可留空）', value: a.domain, placeholder: '例如 cimb.com.my' },
+        { key: 'spend', label: '负债的增减算进每日花费吗？（只对负债有效）', type: 'select', value: a.excludeSpend ? 'no' : 'yes', options: spendOpts,
+          hint: '算：刷卡、分期买东西算花费；用现金还款不算花费（钱只是从现金搬去还债）。' },
       ],
       onSave: (v) => {
         if (!v.name.trim()) { toast('请填写账户名称'); return false; }
         const data = { name: v.name.trim(), type: v.type, domain: cleanDomain(v.domain) };
+        if (v.type === 'debt' && v.spend === 'no') data.excludeSpend = true;
+        else delete a.excludeSpend;
         if (id) Object.assign(a, data);
         else {
           const firstDeleted = state.accounts.findIndex((x) => x.deleted);
