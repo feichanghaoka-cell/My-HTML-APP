@@ -39,95 +39,94 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;paddin
 @keyframes fade{from{opacity:0}}
 
 /* 导航栏 */
-.nav{flex:none;height:calc(60px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 8px 0;
+.nav{flex:none;height:calc(50px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 8px 0;
   display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;
   background:linear-gradient(#b5c0ce 0%,#8a9cb5 50%,#7e92ae 50%,#6d84a2 100%);
   border-top:1px solid #cdd5df;border-bottom:1px solid #2d3642;box-shadow:0 1px 3px rgba(0,0,0,.4);z-index:1}
-.nav h1{margin:0;font-size:24px;font-weight:bold;color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,.5);
+.nav h1{margin:0;font-size:20px;font-weight:bold;color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,.5);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56vw;text-align:center}
-.nb{height:42px;min-width:52px;padding:0 14px;border-radius:7px;color:#fff;font-weight:bold;font-size:17px;
+.nb{height:36px;min-width:48px;padding:0 12px;border-radius:6px;color:#fff;font-weight:bold;font-size:14px;
   text-shadow:0 -1px 0 rgba(0,0,0,.5);border:1px solid #2f3b4c;
   background:linear-gradient(#8ea4c1 0%,#5877a2 50%,#476999 50%,#4a6c9b 100%);
   box-shadow:0 1px 0 rgba(255,255,255,.35),inset 0 1px 0 rgba(255,255,255,.3)}
 .nb:active{background:linear-gradient(#6b7f9a,#2f4a73)}
 .nb.back{justify-self:start;padding-left:20px;clip-path:polygon(14px 0,100% 0,100% 100%,14px 100%,0 50%);border-radius:0 7px 7px 0}
 .nb.right{justify-self:end}
-.nb.plus{font-size:28px;line-height:1;padding:0 14px 3px}
+.nb.plus{font-size:24px;line-height:1;padding:0 12px 3px}
 
 /* 底部标签栏 */
-.tabs{flex:none;display:flex;height:calc(72px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);
+.tabs{flex:none;display:flex;height:calc(56px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);
   background:linear-gradient(#434343 0%,#1f1f1f 50%,#000 50%,#000 100%);border-top:1px solid #000;box-shadow:inset 0 1px 0 #5a5a5a}
-.tabs button{flex:1;margin:4px 3px;border-radius:6px;color:#9a9a9a;font-size:13px;font-weight:bold;
+.tabs button{flex:1;margin:3px 3px;border-radius:5px;color:#9a9a9a;font-size:11px;font-weight:bold;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
-.tabs button span{font-size:30px;line-height:1.1;filter:grayscale(1) brightness(1.3);opacity:.75}
 .tabs button.on{color:#fff;background:linear-gradient(rgba(255,255,255,.22),rgba(255,255,255,.06))}
-.tabs button.on span{filter:none;opacity:1}
 
 /* 主屏图标 */
-.icons{display:grid;grid-template-columns:1fr 1fr;gap:22px 8px;padding:10px 4px}
-.app{display:flex;flex-direction:column;align-items:center;gap:8px}
+.icons{display:grid;grid-template-columns:repeat(3,1fr);gap:20px 6px;padding:8px 2px}
+.app{display:flex;flex-direction:column;align-items:center;gap:6px}
 .app:active .ico{filter:brightness(.6)}
-.ico{width:118px;height:118px;border-radius:24px;position:relative;display:grid;place-items:center;font-size:66px;
+.ico{width:84px;height:84px;border-radius:18px;position:relative;display:grid;place-items:center;font-size:48px;
   background:var(--k,#8b5a2b);overflow:hidden;
   box-shadow:0 4px 7px rgba(0,0,0,.45),inset 0 0 0 1px rgba(0,0,0,.25)}
 .ico::before{content:"";position:absolute;left:-20%;right:-20%;top:-62%;height:110%;border-radius:50%;
   background:linear-gradient(rgba(255,255,255,.75),rgba(255,255,255,.18))}
 .ico::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,0) 50%,rgba(0,0,0,.25))}
-.ico b{position:relative;z-index:1;font-weight:normal;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}
-.ico.sm{width:92px;height:92px;font-size:52px;border-radius:19px}
-.app .nm{font-size:19px;font-weight:bold;color:#333;text-shadow:0 1px 0 rgba(255,255,255,.8)}
-.app .tm{font-size:14px;color:#55606e;margin-top:-6px;text-shadow:0 1px 0 rgba(255,255,255,.7)}
+.ico .i{position:relative;z-index:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.45))}
+.ico.sm{width:68px;height:68px;font-size:38px;border-radius:15px}
+.app .nm{font-size:15px;font-weight:bold;color:#333;text-shadow:0 1px 0 rgba(255,255,255,.8)}
+.app .tm{font-size:12px;color:#55606e;margin-top:-5px;text-shadow:0 1px 0 rgba(255,255,255,.7)}
 
 /* 分组表格 */
-.gh{font-size:17px;font-weight:bold;color:#4c566c;text-shadow:0 1px 0 #fff;margin:18px 10px 7px}
+.gh{font-size:15px;font-weight:bold;color:#4c566c;text-shadow:0 1px 0 #fff;margin:18px 10px 7px}
 .group{background:var(--cell);border:1px solid var(--edge);border-radius:11px;overflow:hidden;box-shadow:0 1px 0 rgba(255,255,255,.8)}
-.row{display:flex;align-items:center;gap:10px;min-height:60px;padding:8px 12px;width:100%;text-align:left;
-  border-top:1px solid var(--cellline);font-size:19px;font-weight:bold;text-decoration:none;color:var(--ink)}
+.row{display:flex;align-items:center;gap:10px;min-height:50px;padding:6px 12px;width:100%;text-align:left;
+  border-top:1px solid var(--cellline);font-size:17px;font-weight:bold;text-decoration:none;color:var(--ink)}
 .row:first-child{border-top:0}
 button.row:active,a.row:active{background:linear-gradient(#058cf5,#015de6);color:#fff}
 button.row:active .sub,a.row:active .sub,button.row:active .chev{color:#fff}
-.row .ri{font-size:30px;width:36px;text-align:center;flex:none}
+.row .ri{font-size:24px;width:30px;text-align:center;flex:none}
 .row .tx{flex:1;min-width:0}
-.row .sub{display:block;font-size:14px;font-weight:normal;color:var(--muted);margin-top:2px}
+.row .sub{display:block;font-size:13px;font-weight:normal;color:var(--muted);margin-top:2px}
 .row .chev{color:#8e8e93;font-size:24px;flex:none}
 .row.add{color:var(--detail)}
-.row select{flex:1;min-width:0;height:44px;border:0;background:transparent;font:inherit;font-size:18px;font-weight:normal;
+.row select{flex:1;min-width:0;height:38px;border:0;background:transparent;font:inherit;font-size:16px;font-weight:normal;
   color:var(--detail);text-align:right;text-align-last:right;direction:rtl}
 .row select option{direction:ltr}
 .row .rl{flex:none}
 .empty{text-align:center;color:#55606e;text-shadow:0 1px 0 rgba(255,255,255,.8);padding:40px 10px 20px}
-.empty .e{font-size:84px}.empty .t{font-size:22px;font-weight:bold;margin-top:6px}
+.empty .e{font-size:64px}.empty .t{font-size:19px;font-weight:bold;margin-top:6px}
 
 /* 配方页 */
 .hero{display:flex;align-items:center;gap:14px;padding:2px 4px 12px}
 .stepper{flex:1;display:flex;align-items:center;justify-content:space-between;gap:6px}
-.stepper .show{flex:1;text-align:center;font-size:32px;min-width:0;white-space:nowrap}
-.rb{width:64px;height:64px;border-radius:50%;flex:none;color:#fff;font-size:38px;font-weight:bold;line-height:1;
+.stepper .show{flex:1;text-align:center;font-size:28px;min-width:0;white-space:nowrap}
+.stepper .show .i{margin:0 1px;filter:drop-shadow(0 1px 0 rgba(255,255,255,.7))}
+.rb{width:52px;height:52px;border-radius:50%;flex:none;color:#fff;font-size:30px;font-weight:bold;line-height:1;
   text-shadow:0 -1px 0 rgba(0,0,0,.4);border:1px solid rgba(0,0,0,.45);
   background:linear-gradient(rgba(255,255,255,.55) 0%,rgba(255,255,255,.15) 50%,rgba(255,255,255,0) 50%,rgba(0,0,0,.12) 100%),var(--k,#5877a2);
   box-shadow:0 2px 4px rgba(0,0,0,.4)}
 .rb:active{filter:brightness(.7)}
 .rb:disabled{opacity:.35}
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.tile{background:linear-gradient(#fff,#eef0f3);border:1px solid var(--edge);border-radius:11px;padding:10px 6px;text-align:center;
+.tile{background:linear-gradient(#fff,#eef0f3);border:1px solid var(--edge);border-radius:11px;padding:7px 6px;text-align:center;
   box-shadow:0 1px 0 rgba(255,255,255,.8)}
-.tile .emo{font-size:32px}
-.tile .num{font-size:34px;font-weight:bold;line-height:1.15}
-.tile .num small{font-size:17px;color:var(--muted);margin-left:2px}
-.tile .lab{font-size:14px;color:var(--muted)}
-.dots{display:flex;align-items:center;justify-content:center;gap:6px;height:38px}
+.tile .emo{font-size:26px;line-height:1.2}
+.tile .num{font-size:28px;font-weight:bold;line-height:1.15}
+.tile .num small{font-size:14px;color:var(--muted);margin-left:2px}
+.tile .lab{font-size:13px;color:var(--muted)}
+.dots{display:flex;align-items:center;justify-content:center;gap:5px;height:31px}
 .dots i{display:block;border-radius:50%;background:#c9ccd1;box-shadow:inset 0 1px 1px rgba(0,0,0,.3)}
 .dots i.on{background:#c8732d}
-.path{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;margin:14px 0 0;font-size:28px}
-.path .arrow{color:#6b7684;font-size:20px;align-self:center}
+.path{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:5px;margin:12px 0 0;font-size:22px}
+.path .arrow{color:#6b7684;font-size:16px;align-self:center}
 .foot{flex:none;padding:10px 12px calc(12px + env(safe-area-inset-bottom));
   background:linear-gradient(rgba(197,204,212,0),rgba(150,160,172,.9));}
-.big{display:block;width:100%;min-height:76px;border-radius:14px;font-size:30px;font-weight:bold;color:#fff;
+.big{display:block;width:100%;min-height:58px;border-radius:12px;font-size:23px;font-weight:bold;color:#fff;
   text-shadow:0 -1px 0 rgba(0,0,0,.45);border:1px solid rgba(0,0,0,.5);
   background:linear-gradient(rgba(255,255,255,.5) 0%,rgba(255,255,255,.14) 50%,rgba(255,255,255,0) 50%,rgba(0,0,0,.14) 100%),var(--k,#2ea44f);
   box-shadow:0 2px 5px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.4)}
 .big:active{filter:brightness(.7)}
-.big.red{--k:#d5342b}.big.gray{--k:#7a8798}.big.sm{min-height:58px;font-size:22px}
+.big.red{--k:#d5342b}.big.gray{--k:#7a8798}.big.sm{min-height:48px;font-size:18px}
 
 /* 冲煮画面 */
 .page.dark{background:radial-gradient(circle at 50% 30%,#4a4d52,#17181a 75%);color:#fff}
@@ -137,83 +136,110 @@ button.row:active .sub,a.row:active .sub,button.row:active .chev{color:#fff}
 .steps{display:flex;gap:5px;flex:1;justify-content:center}
 .steps i{height:12px;flex:1;max-width:34px;border-radius:6px;background:#0c0c0c;box-shadow:inset 0 1px 2px #000,0 1px 0 rgba(255,255,255,.15)}
 .steps i.on{background:linear-gradient(rgba(255,255,255,.5),rgba(255,255,255,0) 55%),var(--c)}
-.act{font-size:72px;line-height:1.1;margin-top:2px;animation:bounce .5s cubic-bezier(.3,1.6,.5,1)}
+.act{font-size:60px;line-height:1.1;margin-top:auto;animation:bounce .5s cubic-bezier(.3,1.6,.5,1)}
 @keyframes bounce{from{transform:scale(.2);opacity:0}}
-.say{font-size:44px;font-weight:bold;color:var(--c);line-height:1.2;text-shadow:0 2px 3px rgba(0,0,0,.6)}
-.goal{font-size:25px;font-weight:bold;min-height:34px}
-.cupwrap{position:relative;margin:12px 44px 8px 0}
-.cup{width:180px;height:160px;border:7px solid #f2f2f2;border-top:0;border-radius:0 0 52px 52px;position:relative;overflow:hidden;
+.say{font-size:34px;font-weight:bold;color:var(--c);line-height:1.2;text-shadow:0 2px 3px rgba(0,0,0,.6)}
+.goal{font-size:20px;font-weight:bold;min-height:28px}
+.cupwrap{position:relative;margin:14px 0 12px 0}
+.cup{width:150px;height:132px;border:6px solid #f2f2f2;border-top:0;border-radius:0 0 44px 44px;position:relative;overflow:hidden;
   background:rgba(255,255,255,.08);box-shadow:0 6px 12px rgba(0,0,0,.5)}
 .fill{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(90deg,rgba(255,255,255,.35),rgba(255,255,255,0) 40%),var(--water)}
-.cup .g{position:absolute;inset:0;display:grid;place-items:center;font-size:40px;font-weight:bold;text-shadow:0 2px 3px rgba(0,0,0,.6)}
-.cup .g small{font-size:20px}
-.handle{position:absolute;right:-42px;top:24px;width:50px;height:70px;border:7px solid #f2f2f2;border-left:0;border-radius:0 38px 38px 0}
-.lcd{font-size:76px;font-weight:bold;font-variant-numeric:tabular-nums;line-height:1;padding:6px 22px;border-radius:12px;
-  background:linear-gradient(#0b0b0b,#262626);border:1px solid #000;box-shadow:inset 0 2px 6px #000,0 1px 0 rgba(255,255,255,.2);min-width:170px}
-.next{font-size:19px;color:#c2c6cc;margin-top:8px;min-height:26px}
+.cup .g{position:absolute;inset:0;display:grid;place-items:center;font-size:32px;font-weight:bold;text-shadow:0 2px 3px rgba(0,0,0,.6)}
+.cup .g small{font-size:16px}
+.handle{position:absolute;right:-34px;top:20px;width:40px;height:58px;border:6px solid #f2f2f2;border-left:0;border-radius:0 32px 32px 0}
+.lcd{font-size:56px;font-weight:bold;font-variant-numeric:tabular-nums;line-height:1;padding:6px 22px;border-radius:12px;
+  background:linear-gradient(#0b0b0b,#262626);border:1px solid #000;box-shadow:inset 0 2px 6px #000,0 1px 0 rgba(255,255,255,.2);min-width:140px}
+.next{font-size:16px;color:#c2c6cc;margin-top:8px;min-height:26px}
 .ctrl{display:flex;gap:22px;justify-content:center;align-items:center;margin-top:auto;padding-top:10px}
-.rb.xl{width:96px;height:96px;font-size:42px}
+.rb.xl{width:76px;height:76px;font-size:34px}
 .done{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px}
-.done .e{font-size:150px;animation:bounce .7s cubic-bezier(.3,1.6,.5,1)}
-.done .t{font-size:52px;font-weight:bold;text-shadow:0 2px 3px rgba(0,0,0,.6)}
-.done .left{font-size:21px;color:#d5d8dd;margin:8px 0 26px;min-height:28px}
+.done .e{font-size:110px;line-height:1;animation:bounce .7s cubic-bezier(.3,1.6,.5,1)}
+.done .t{font-size:38px;font-weight:bold;text-shadow:0 2px 3px rgba(0,0,0,.6)}
+.done .left{font-size:17px;color:#d5d8dd;margin:8px 0 26px;min-height:28px}
 .done .big+.big{margin-top:14px}
 
 /* 表单 */
-.fl{display:flex;align-items:center;gap:8px;min-height:60px;padding:6px 12px;border-top:1px solid var(--cellline);font-size:18px;font-weight:bold}
+.fl{display:flex;align-items:center;gap:8px;min-height:50px;padding:4px 12px;border-top:1px solid var(--cellline);font-size:16px;font-weight:bold}
 .fl:first-child{border-top:0}
 .fl>span{flex:none;min-width:5.4em}
-.fl input,.fl select{flex:1;min-width:0;height:46px;border:0;background:transparent;font:inherit;font-weight:normal;font-size:19px;
+.fl input,.fl select{flex:1;min-width:0;height:40px;border:0;background:transparent;font:inherit;font-weight:normal;font-size:17px;
   color:var(--detail);-webkit-user-select:text;user-select:text;outline:none}
 .seg{flex:1;display:flex;border:1px solid #6b7a90;border-radius:8px;overflow:hidden}
-.seg button{flex:1;height:44px;font-size:18px;font-weight:bold;color:#4a5a73;background:linear-gradient(#fff,#dfe3e8);border-left:1px solid #6b7a90}
+.seg button{flex:1;height:36px;font-size:15px;font-weight:bold;color:#4a5a73;background:linear-gradient(#fff,#dfe3e8);border-left:1px solid #6b7a90}
 .seg button:first-child{border-left:0}
 .seg button.on{color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,.4);background:linear-gradient(#7c93b5 0%,#5877a2 50%,#476999 50%,#4a6c9b 100%)}
 .emos{display:flex;gap:7px;flex-wrap:wrap;padding:10px 12px}
-.emos button{width:54px;height:54px;border-radius:12px;border:1px solid var(--edge);background:linear-gradient(#fff,#e6e9ed);font-size:30px}
+.emos button{width:48px;height:48px;border-radius:10px;border:1px solid var(--edge);background:linear-gradient(#fff,#e6e9ed);font-size:28px;display:grid;place-items:center}
 .emos button.on{border:3px solid #015de6}
 .srow{display:grid;grid-template-columns:1.35fr 1fr 1fr 44px;gap:5px;padding:6px 8px;border-top:1px solid var(--cellline);align-items:center}
 .srow:first-child{border-top:0}
-.srow input,.srow select{width:100%;height:48px;border:1px solid #b8bcc2;border-radius:8px;background:#fff;font:inherit;font-size:17px;padding:0 6px;
+.srow input,.srow select{width:100%;height:40px;border:1px solid #b8bcc2;border-radius:8px;background:#fff;font:inherit;font-size:16px;padding:0 6px;
   color:var(--ink);box-shadow:inset 0 1px 3px rgba(0,0,0,.2);-webkit-user-select:text;user-select:text}
-.srow .x{width:44px;height:44px;border-radius:50%;font-size:22px;color:#fff;font-weight:bold;border:1px solid #7d1711;
+.srow .x{width:36px;height:36px;margin:auto;border-radius:50%;font-size:22px;color:#fff;font-weight:bold;border:1px solid #7d1711;
   background:linear-gradient(#f0837c,#d5342b)}
 .shead{display:grid;grid-template-columns:1.35fr 1fr 1fr 44px;gap:5px;font-size:13px;color:#4c566c;padding:0 12px 5px}
-.err{color:#b3261e;font-size:18px;font-weight:bold;text-align:center;min-height:26px;margin:12px 0 4px;text-shadow:0 1px 0 rgba(255,255,255,.8)}
+.err{color:#b3261e;font-size:16px;font-weight:bold;text-align:center;min-height:26px;margin:12px 0 4px;text-shadow:0 1px 0 rgba(255,255,255,.8)}
 .gap{height:14px}
-@media (max-height:700px){.act{font-size:52px}.say{font-size:36px}.cup{height:120px}.lcd{font-size:58px}}
+@media (max-height:640px){.act{font-size:44px}.say{font-size:28px}.cup{height:104px}.lcd{font-size:44px}}
+.i{width:1em;height:1em;flex:none;vertical-align:-.14em;fill:currentColor;stroke:currentColor;overflow:visible}
+.c-blue{fill:url(#g-blue) #1b78dc;stroke:url(#g-blue) #1b78dc}
+.c-amber{fill:url(#g-amber) #e8960a;stroke:url(#g-amber) #e8960a}
+.c-green{fill:url(#g-green) #27994a;stroke:url(#g-green) #27994a}
+.c-purple{fill:url(#g-purple) #7f52c6;stroke:url(#g-purple) #7f52c6}
+.c-orange{fill:url(#g-orange) #e56f25;stroke:url(#g-orange) #e56f25}
+.c-brown{fill:url(#g-brown) #63391a;stroke:url(#g-brown) #63391a}
+.c-red{fill:url(#g-red) #cf2f27;stroke:url(#g-red) #cf2f27}
+.c-slate{fill:url(#g-slate) #3f5880;stroke:url(#g-slate) #3f5880}
+.c-white{fill:url(#g-white) #cfd9e6;stroke:url(#g-white) #cfd9e6}
+.c-gray{fill:url(#g-gray) #737373;stroke:url(#g-gray) #737373}
+.c-tabon{fill:url(#g-tabon) #2a8cf2;stroke:url(#g-tabon) #2a8cf2}
+.sh{filter:drop-shadow(0 2px 2px rgba(0,0,0,.45))}
+.ri{display:grid;place-items:center}.ri .i{font-size:24px;filter:drop-shadow(0 1px 0 rgba(255,255,255,.6))}
+.tabs .i{font-size:26px}
+.gh .i{font-size:17px;margin-right:4px}
+.big .i{font-size:.95em;margin-right:8px;filter:drop-shadow(0 -1px 0 rgba(0,0,0,.4))}
+.rb .i{font-size:.8em;vertical-align:-.1em;filter:drop-shadow(0 -1px 0 rgba(0,0,0,.4))}
+.fl>span .i{font-size:18px;margin-right:4px}
+.next .i{font-size:18px;margin:0 3px}
+.done .left .i{font-size:19px;margin-right:4px}
+.tm .i{font-size:12px;margin-right:2px}
 </style>
 </head>
 <body>
 <div id="stage"></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="g-blue" gradientUnits="userSpaceOnUse" x1="0" y1="1" x2="0" y2="23"><stop offset="0" stop-color="#8fd0ff"/><stop offset="1" stop-color="#1b78dc"/></linearGradient><linearGradient id="g-amber" gradientUnits="userSpaceOnUse" x1="0" y1="1" x2="0" y2="23"><stop offset="0" stop-color="#ffdc7a"/><stop offset="1" stop-color="#e8960a"/></linearGradient><linearGradient id="g-green" gradientUnits="userSpaceOnUse" x1="0" y1="1" x2="0" y2="23"><stop offset="0" stop-color="#9be8ae"/><stop offset="1" stop-color="#27994a"/></linearGradient><linearGradient id="g-purple" gradientUnits="userSpaceOnUse" x1="0" y1="1" x2="0" y2="23"><stop offset="0" stop-color="#d6bfff"/><stop offset="1" stop-color="#7f52c6"/></linearGradient><linearGradient id="g-orange" gradientUnits="userSpaceOnUse" x1="0" y1="1" x2="0" y2="23"><stop offset="0" stop-color="#ffc694"/><stop offset="1" stop-color="#e56f25"/></linearGradient><linearGradient id="g-brown" gradientUnits="userSpaceOnUse" x1="0" y1="1" x2="0" y2="23"><stop offset="0" stop-color="#b98d63"/><stop offset="1" stop-color="#63391a"/></linearGradient><linearGradient id="g-red" gradientUnits="userSpaceOnUse" x1="0" y1="1" x2="0" y2="23"><stop offset="0" stop-color="#ff9f95"/><stop offset="1" stop-color="#cf2f27"/></linearGradient><linearGradient id="g-slate" gradientUnits="userSpaceOnUse" x1="0" y1="1" x2="0" y2="23"><stop offset="0" stop-color="#93a7c4"/><stop offset="1" stop-color="#3f5880"/></linearGradient><linearGradient id="g-white" gradientUnits="userSpaceOnUse" x1="0" y1="1" x2="0" y2="23"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cfd9e6"/></linearGradient><linearGradient id="g-gray" gradientUnits="userSpaceOnUse" x1="0" y1="1" x2="0" y2="23"><stop offset="0" stop-color="#c6c6c6"/><stop offset="1" stop-color="#737373"/></linearGradient><linearGradient id="g-tabon" gradientUnits="userSpaceOnUse" x1="0" y1="1" x2="0" y2="23"><stop offset="0" stop-color="#d2ecff"/><stop offset="1" stop-color="#2a8cf2"/></linearGradient></defs><symbol id="i-cup" viewBox="0 0 24 24"><path d="M4 9h12v5.5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z" stroke="none"/><path d="M17 10h.8a3.2 3.2 0 0 1 0 6.4H16.6l.4-2h.8a1.2 1.2 0 0 0 0-2.4H17z" stroke="none"/><path d="M2.5 20.6h15a.9.9 0 0 1 0 1.8h-15a.9.9 0 0 1 0-1.8z" stroke="none"/><path d="M7.5 2.2c1.1 1.3-1.1 2.2 0 3.8M11.8 2.2c1.1 1.3-1.1 2.2 0 3.8" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol><symbol id="i-v60" viewBox="0 0 24 24"><path d="M3 4.5h15.5l-5.2 10.3H8.2z" stroke="none"/><path d="M5.5 15.8h10.5a1 1 0 0 1 0 2H5.5a1 1 0 0 1 0-2z" stroke="none"/><path d="M10.75 19c.9 1.2 1.4 1.9 1.4 2.5a1.4 1.4 0 0 1-2.8 0c0-.6.5-1.3 1.4-2.5z" stroke="none"/><path d="M18.6 6.2c3.6-.2 3.6 5.2-1.6 5.4" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol><symbol id="i-aero" viewBox="0 0 24 24"><path d="M8 2h8a1 1 0 0 1 0 2H8a1 1 0 0 1 0-2z" stroke="none"/><path d="M10.4 4.6h3.2V9h-3.2z" stroke="none"/><path d="M7.6 9.2h8.8v9.6H7.6z" stroke="none"/><path d="M5.6 19.4h12.8a1 1 0 0 1 1 1v.6a1 1 0 0 1-1 1H5.6a1 1 0 0 1-1-1v-.6a1 1 0 0 1 1-1z" stroke="none"/></symbol><symbol id="i-press" viewBox="0 0 24 24"><circle cx="11" cy="2.6" r="1.6" stroke="none"/><path d="M10.3 3.5h1.4v3h-1.4z" stroke="none"/><path d="M5 6.2h12a.9.9 0 0 1 0 1.8H5a.9.9 0 0 1 0-1.8z" stroke="none"/><path d="M6 8.8h10v11.7a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 6 20.5z" stroke="none"/><path d="M16.4 10.5h3v7.2h-3" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol><symbol id="i-kettle" viewBox="0 0 24 24"><circle cx="10.5" cy="6.4" r="1.3" stroke="none"/><path d="M7.5 7.6h6a.9.9 0 0 1 0 1.8h-6a.9.9 0 0 1 0-1.8z" stroke="none"/><path d="M6.4 10.2h8.2l1.6 10.3a1.3 1.3 0 0 1-1.3 1.5H6.1a1.3 1.3 0 0 1-1.3-1.5z" stroke="none"/><path d="M5.6 17.5C2 15.6 4.3 9 1.6 7.4" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.2 11.6c5.6-.2 5.6 6.6 .8 6.8" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol><symbol id="i-ice" viewBox="0 0 24 24"><path d="M12 2.5v19M3.8 7.25l16.4 9.5M3.8 16.75l16.4-9.5" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.6 3.6L12 6l2.4-2.4M9.6 20.4L12 18l2.4 2.4M3.4 10.4l3.3-.9-.9-3.3M20.6 13.6l-3.3.9.9 3.3M3.4 13.6l3.3.9-.9 3.3M20.6 10.4l-3.3-.9.9-3.3" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol><symbol id="i-milk" viewBox="0 0 24 24"><path d="M8.5 2h7a.8.8 0 0 1 .8.8V5l1.6 2.6c.2.4.3.8.3 1.2v11.7a1.5 1.5 0 0 1-1.5 1.5H7.3a1.5 1.5 0 0 1-1.5-1.5V8.8c0-.4.1-.8.3-1.2L7.7 5V2.8a.8.8 0 0 1 .8-.8z" stroke="none"/><path d="M8 5.2h8" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="stroke:#000;stroke-opacity:.38"/></symbol><symbol id="i-leaf" viewBox="0 0 24 24"><path d="M20.5 3C9.5 3 4 8.2 4 15c0 1.3.3 2.5.8 3.6L2.6 20.8a1 1 0 0 0 1.4 1.4l2.1-2.1c1.200.7 2.600 1 4 1 7.200 0 10.400-7.100 10.400-18.100z" stroke="none"/><path d="M7 18C9.500 13 13 9.500 17 7.500" fill="none" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" style="stroke:#000;stroke-opacity:.38"/></symbol><symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2l3 6.600 7.200.800-5.400 4.900 1.500 7.100L12 17.800l-6.300 3.600 1.500-7.100L1.800 9.400 9 8.600z" stroke="none"/></symbol><symbol id="i-bean" viewBox="0 0 24 24"><g transform="rotate(32 12 12)"><ellipse cx="12" cy="12" rx="6.6" ry="9.6" stroke="none"/><path d="M12.300 3.200c-4 4.500 3.400 8 -.600 17.600" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="stroke:#000;stroke-opacity:.38"/></g></symbol><symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 2.300c4.200 5.300 6.700 8.900 6.700 12.200a6.700 6.700 0 0 1-13.400 0c0-3.300 2.500-6.900 6.700-12.200z" stroke="none"/></symbol><symbol id="i-wait" viewBox="0 0 24 24"><path d="M6.500 2h11a1 1 0 0 1 0 2h-.300v2.600c0 1.400-.700 2.700-1.800 3.500L13.700 12l1.700 1.900c1.100.800 1.800 2.100 1.800 3.500V20h.300a1 1 0 0 1 0 2h-11a1 1 0 0 1 0-2h.300v-2.600c0-1.400.700-2.700 1.800-3.500L10.300 12 8.600 10.100C7.500 9.300 6.800 8 6.800 6.600V4h-.300a1 1 0 0 1 0-2z" stroke="none"/></symbol><symbol id="i-spoon" viewBox="0 0 24 24"><ellipse cx="8" cy="7.200" rx="4.200" ry="5.800" transform="rotate(-40 8 7.200)" stroke="none"/><path d="M10.800 10.800L20.300 21" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol><symbol id="i-down" viewBox="0 0 24 24"><path d="M10 2h4a.700.700 0 0 1 .700.700V10h3.100a.600.600 0 0 1 .450 1l-5.800 6.500a.600.600 0 0 1-.900 0L5.750 11a.600.600 0 0 1 .450-1h3.100V2.700A.700.700 0 0 1 10 2z" stroke="none"/><path d="M4.500 19.600h15a1.200 1.200 0 0 1 0 2.400h-15a1.200 1.200 0 0 1 0-2.400z" stroke="none"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="M4.500 12.800l5 5L19.500 6.500" fill="none" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></symbol><symbol id="i-thermo" viewBox="0 0 24 24"><path d="M9.800 4.200a2.200 2.200 0 0 1 4.400 0v8.600a5 5 0 1 1-4.400 0z" stroke="none"/></symbol><symbol id="i-grinder" viewBox="0 0 24 24"><circle cx="19.300" cy="3.200" r="1.900" stroke="none"/><path d="M12 6.500V3.200h6.500" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.500 6.200h9a.900.900 0 0 1 0 1.800h-9a.900.900 0 0 1 0-1.800z" stroke="none"/><path d="M8.200 8.800h7.600v11.700a1.500 1.500 0 0 1-1.500 1.500H9.700a1.500 1.500 0 0 1-1.500-1.500z" stroke="none"/><path d="M8.200 14.500h7.600" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="stroke:#000;stroke-opacity:.38"/></symbol><symbol id="i-filter" viewBox="0 0 24 24"><path d="M3.300 5h17.400a.800.800 0 0 1 .700 1.200L13 20.800a1.150 1.150 0 0 1-2 0L2.600 6.200A.800.800 0 0 1 3.300 5z" stroke="none"/><path d="M12 5.500v15" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="stroke:#000;stroke-opacity:.38"/></symbol><symbol id="i-video" viewBox="0 0 24 24"><path fill-rule="evenodd" stroke="none" d="M4.500 4.500h15A2.500 2.500 0 0 1 22 7v10a2.500 2.500 0 0 1-2.500 2.500h-15A2.500 2.500 0 0 1 2 17V7a2.500 2.500 0 0 1 2.500-2.500zM10 8.300v7.400l6.200-3.700z"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M10.400 4h3.200v6.400H20v3.200h-6.400V20h-3.200v-6.400H4v-3.200h6.400z" stroke="none"/></symbol><symbol id="i-play" viewBox="0 0 24 24"><path d="M7.500 4.200a.800.800 0 0 1 1.200-.700l12 7.800a.800.800 0 0 1 0 1.400l-12 7.800a.800.800 0 0 1-1.200-.700z" stroke="none"/></symbol><symbol id="i-pause" viewBox="0 0 24 24"><path d="M6 4h4.200v16H6zM13.800 4H18v16h-4.200z" stroke="none"/></symbol><symbol id="i-skip" viewBox="0 0 24 24"><path d="M4.500 4.500l9.500 7.500-9.500 7.500zM15.500 4.500h3.500v15h-3.500z" stroke="none"/></symbol><symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></symbol><symbol id="i-home" viewBox="0 0 24 24"><path d="M12 2.800l9.300 8.400h-2.600v9.300h-4.500v-6h-4.400v6H5.300v-9.300H2.700z" stroke="none"/></symbol><symbol id="i-repeat" viewBox="0 0 24 24"><path d="M19.200 12.500a7.200 7.200 0 1 1-2.400-5.700" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M20.500 2.500v6.800h-6.800z" stroke="none"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M9.300 2.800h5.400l.900 1.900H20v2.100H4V4.700h4.400zM5.800 8.400h12.400l-.900 12.300a1.400 1.400 0 0 1-1.400 1.300H8.100a1.400 1.400 0 0 1-1.400-1.300z" stroke="none"/></symbol><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.600" fill="none" stroke-width="2.200"/><path d="M12 7.500V12l3 2" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol></svg>
 <script>
 const TYPES = {
-  ready:{icon:'🙌', label:'准备好',  c:'var(--ready)'},
-  pour: {icon:'💧', label:'倒水',    c:'var(--pour)'},
-  wait: {icon:'⏳', label:'等一等',  c:'var(--wait)'},
-  stir: {icon:'🥄', label:'搅一搅',  c:'var(--stir)'},
-  press:{icon:'✋', label:'往下压',  c:'var(--press)'},
+  ready:{icon:'check', k:'orange', label:'准备好',  c:'var(--ready)'},
+  pour: {icon:'drop', k:'blue', label:'倒水',    c:'var(--pour)'},
+  wait: {icon:'wait', k:'amber', label:'等一等',  c:'var(--wait)'},
+  stir: {icon:'spoon', k:'green', label:'搅一搅',  c:'var(--stir)'},
+  press:{icon:'down', k:'purple', label:'往下压',  c:'var(--press)'},
 };
 const GRIND = ['很细','细','中等','粗','很粗'];
-const EMOJIS = ['☕','🫖','🧊','🥛','🍵','🧪','🏺','⭐'];
+const EMOJIS = ['cup','v60','aero','press','kettle','ice','milk','leaf','star'];
+const OLD = {'☕':'cup','🫖':'kettle','🧊':'ice','🥛':'milk','🍵':'leaf','🧪':'aero','🏺':'press','⭐':'star'};
+const I = (name, cls) => `<svg class="i ${cls || ''}" aria-hidden="true"><use href="#i-${name}"/></svg>`;
+const tI = (t, plain) => I(TYPES[t].icon, plain ? '' : 'c-' + TYPES[t].k);
+const rIcon = r => OLD[r.emo] || (EMOJIS.includes(r.emo) ? r.emo : 'cup');
 const COLORS = ['#8b5a2b','#2f7fd0','#d9822b','#3a9d5d','#8457c9','#c93f3f','#2a9d9d','#566579'];
 const KINDS = {
-  grinder:{icon:'⚙️', label:'磨豆机'},
-  dripper:{icon:'🔻', label:'滤杯'},
-  filter: {icon:'📄', label:'滤纸'},
+  grinder:{icon:'grinder', label:'磨豆机'},
+  dripper:{icon:'v60', label:'滤杯'},
+  filter: {icon:'filter', label:'滤纸'},
 };
 const ROAST = ['浅','中','深'];
 // 所有克数都按 1 杯计算
 const SEED = [
-  {id:'v60', name:'手冲 V60', emo:'☕', coffee:15, water:240, temp:92, grind:1, video:'', steps:[
+  {id:'v60', name:'手冲 V60', emo:'v60', coffee:15, water:240, temp:92, grind:1, video:'', steps:[
     {t:'pour',s:10,to:30,label:'慢慢倒水'},{t:'wait',s:25},
     {t:'pour',s:25,to:150},{t:'wait',s:15},
     {t:'pour',s:25,to:240},{t:'wait',s:50,label:'等水滴完'}]},
-  {id:'aero', name:'爱乐压', emo:'🧪', coffee:15, water:220, temp:85, grind:1, video:'', steps:[
+  {id:'aero', name:'爱乐压', emo:'aero', coffee:15, water:220, temp:85, grind:1, video:'', steps:[
     {t:'pour',s:15,to:220},{t:'stir',s:10},{t:'wait',s:65},{t:'press',s:30}]},
-  {id:'french', name:'法压壶', emo:'🏺', coffee:15, water:250, temp:93, grind:3, video:'', steps:[
+  {id:'french', name:'法压壶', emo:'press', coffee:15, water:250, temp:93, grind:3, video:'', steps:[
     {t:'pour',s:20,to:250},{t:'wait',s:220},{t:'stir',s:10},{t:'press',s:20}]},
-  {id:'clever', name:'聪明杯', emo:'🫖', coffee:15, water:240, temp:90, grind:2, video:'', steps:[
+  {id:'clever', name:'聪明杯', emo:'kettle', coffee:15, water:240, temp:90, grind:2, video:'', steps:[
     {t:'pour',s:20,to:240},{t:'wait',s:120},{t:'wait',s:60,label:'放到杯子上'}]},
 ];
 
@@ -258,17 +284,17 @@ const nav = (title, left, right) => `<div class="nav">
   ${left ? `<button class="nb back" data-act="${left.act}">${esc(left.label)}</button>` : '<span></span>'}
   <h1>${esc(title)}</h1>
   ${right ? `<button class="nb right ${right.plus ? 'plus' : ''}" data-act="${right.act}" aria-label="${esc(right.aria || right.label)}">${esc(right.label)}</button>` : '<span></span>'}</div>`;
-const tabs = on => `<div class="tabs">` + [['brew','☕','冲煮'],['beans','🫘','豆子'],['gear','🧰','器具']].map(t =>
-  `<button data-act="tab" data-tab="${t[0]}" class="${t[0]===on?'on':''}"><span>${t[1]}</span>${t[2]}</button>`).join('') + `</div>`;
-const ico = (r, sm) => `<div class="ico ${sm ? 'sm' : ''}" style="--k:${COLORS[Math.max(0, db.recipes.indexOf(r)) % COLORS.length]}"><b>${esc(r.emo)}</b></div>`;
+const tabs = on => `<div class="tabs">` + [['brew','cup','冲煮'],['beans','bean','豆子'],['gear','grinder','器具']].map(t =>
+  `<button data-act="tab" data-tab="${t[0]}" class="${t[0]===on?'on':''}">${I(t[1], t[0]===on ? 'c-tabon' : 'c-gray')}${t[2]}</button>`).join('') + `</div>`;
+const ico = (r, sm) => `<div class="ico ${sm ? 'sm' : ''}" style="--k:${COLORS[Math.max(0, db.recipes.indexOf(r)) % COLORS.length]}">${I(rIcon(r), 'c-white')}</div>`;
 
 /* ---------- 冲煮(首页) ---------- */
 function home(anim){
   stopBrew();
   show(nav('今天喝什么?', null, {act:'newRecipe', label:'＋', plus:true, aria:'新配方'}) +
     `<div class="body">` + (db.recipes.length ? `<div class="icons">` + db.recipes.map(r =>
-      `<button class="app" data-act="open" data-id="${esc(r.id)}">${ico(r)}<div class="nm">${esc(r.name)}</div><div class="tm">⏱ ${fmt(total(r))}</div></button>`).join('') + `</div>`
-      : `<div class="empty"><div class="e">☕</div><div class="t">还没有配方</div></div><button class="big" data-act="newRecipe">＋ 新配方</button>`) +
+      `<button class="app" data-act="open" data-id="${esc(r.id)}">${ico(r)}<div class="nm">${esc(r.name)}</div><div class="tm">${I('clock')}${fmt(total(r))}</div></button>`).join('') + `</div>`
+      : `<div class="empty"><div class="e">${I('cup','c-slate')}</div><div class="t">还没有配方</div></div><button class="big" data-act="newRecipe">＋ 新配方</button>`) +
     `</div>` + tabs('brew'), anim);
 }
 
@@ -276,8 +302,8 @@ function home(anim){
 function dots(n){
   return `<div class="dots">` + [0,1,2,3,4].map(i => { const d = 8 + i*5; return `<i class="${i===n?'on':''}" style="width:${d}px;height:${d}px"></i>`; }).join('') + `</div>`;
 }
-function pick(icon, label, key, list, nameOf){
-  return `<label class="row"><span class="ri">${icon}</span><span class="rl">${label}</span>
+function pick(icon, k2, label, key, list, nameOf){
+  return `<label class="row"><span class="ri">${I(icon, k2)}</span><span class="rl">${label}</span>
     <select data-pick="${key}"><option value="">不选</option>${list.map(x => `<option value="${esc(x.id)}" ${cur[key]===x.id?'selected':''}>${esc(nameOf(x))}</option>`).join('')}</select></label>`;
 }
 function recipe(anim){
@@ -286,25 +312,25 @@ function recipe(anim){
     <div class="hero">${ico(r, true)}
       <div class="stepper">
         <button class="rb" data-act="less" ${cups<=1?'disabled':''} aria-label="少一杯">−</button>
-        <div class="show" aria-label="${cups} 杯">${'☕'.repeat(cups)}</div>
+        <div class="show" aria-label="${cups} 杯">${I('cup','c-brown').repeat(cups)}</div>
         <button class="rb" data-act="more" ${cups>=4?'disabled':''} aria-label="多一杯">+</button>
       </div></div>
     <div class="tiles">
-      <div class="tile"><div class="emo">🫘</div><div class="num">${Math.round(r.coffee*cups)}<small>克</small></div><div class="lab">咖啡粉</div></div>
-      <div class="tile"><div class="emo">💧</div><div class="num">${Math.round(r.water*cups)}<small>克</small></div><div class="lab">水</div></div>
-      <div class="tile"><div class="emo">🌡️</div><div class="num">${r.temp}<small>°C</small></div><div class="lab">水温</div></div>
-      <div class="tile">${dots(r.grind)}<div class="num" style="font-size:25px;line-height:1.5">${GRIND[r.grind]}</div><div class="lab">磨多细</div></div>
+      <div class="tile"><div class="emo">${I('bean','c-brown')}</div><div class="num">${Math.round(r.coffee*cups)}<small>克</small></div><div class="lab">咖啡粉</div></div>
+      <div class="tile"><div class="emo">${I('drop','c-blue')}</div><div class="num">${Math.round(r.water*cups)}<small>克</small></div><div class="lab">水</div></div>
+      <div class="tile"><div class="emo">${I('thermo','c-red')}</div><div class="num">${r.temp}<small>°C</small></div><div class="lab">水温</div></div>
+      <div class="tile">${dots(r.grind)}<div class="num" style="font-size:21px;line-height:1.6">${GRIND[r.grind]}</div><div class="lab">磨多细</div></div>
     </div>
-    <div class="path">${r.steps.map(s => `<span>${TYPES[s.t].icon}</span>`).join('<span class="arrow">›</span>')}</div>
-    ${okUrl(r.video) ? `<div class="gh">视频</div><div class="group"><a class="row" href="${esc(r.video)}" target="_blank" rel="noopener"><span class="ri">🎬</span><span class="tx">看视频怎么做</span><span class="chev">›</span></a></div>` : ''}
+    <div class="path">${r.steps.map(s => tI(s.t)).join('<span class="arrow">›</span>')}</div>
+    ${okUrl(r.video) ? `<div class="gh">视频</div><div class="group"><a class="row" href="${esc(r.video)}" target="_blank" rel="noopener"><span class="ri">${I('video','c-red')}</span><span class="tx">看视频怎么做</span><span class="chev">›</span></a></div>` : ''}
     <div class="gh">今天用什么</div>
     <div class="group">
-      ${pick('🫘','豆子','bean',db.beans, b => b.name + ' (剩' + Math.round(b.grams || 0) + '克)')}
-      ${pick(KINDS.grinder.icon,'磨豆机','grinder',g('grinder'), x => x.name)}
-      ${pick(KINDS.dripper.icon,'滤杯','dripper',g('dripper'), x => x.name)}
-      ${pick(KINDS.filter.icon,'滤纸','filter',g('filter'), x => x.name)}
+      ${pick('bean','c-brown','豆子','bean',db.beans, b => b.name + ' (剩' + Math.round(b.grams || 0) + '克)')}
+      ${pick(KINDS.grinder.icon,'c-slate','磨豆机','grinder',g('grinder'), x => x.name)}
+      ${pick(KINDS.dripper.icon,'c-slate','滤杯','dripper',g('dripper'), x => x.name)}
+      ${pick(KINDS.filter.icon,'c-slate','滤纸','filter',g('filter'), x => x.name)}
     </div></div>
-    <div class="foot"><button class="big" data-act="start">▶ 开始</button></div>`, anim);
+    <div class="foot"><button class="big" data-act="start">${I('play')}开始</button></div>`, anim);
 }
 
 /* ---------- 冲煮计时 ---------- */
@@ -339,18 +365,18 @@ function drawStep(anim){
   const s = brew.steps[brew.i], T = TYPES[s.t], nx = brew.steps[brew.i+1];
   const goal = s.t === 'pour' ? `秤上到 ${Math.round(s.to*cups)} 克` : s.t === 'ready' ? `放好 ${Math.round(cur.coffee*cups)} 克咖啡粉` : '';
   show(`<div class="brew" style="--c:${T.c}">
-    <div class="btop"><button class="rb" style="--k:#7a8798;font-size:26px" data-act="quit" aria-label="退出">✕</button>
+    <div class="btop"><button class="rb" style="--k:#7a8798" data-act="quit" aria-label="退出">${I('close')}</button>
       <div class="steps">${brew.steps.slice(1).map((_,k) => `<i class="${k < brew.i ? 'on' : ''}"></i>`).join('')}</div>
-      <div style="width:64px"></div></div>
-    <div class="act">${T.icon}</div>
+      <div style="width:52px"></div></div>
+    <div class="act">${tI(s.t)}</div>
     <div class="say">${esc(s.label || T.label)}</div>
     <div class="goal">${goal}</div>
     <div class="cupwrap"><div class="cup"><div class="fill"></div><div class="g"><span><span class="gn">0</span><small> 克</small></span></div></div><div class="handle"></div></div>
     <div class="lcd"></div>
-    <div class="next">${nx ? '下一步 ' + TYPES[nx.t].icon + ' ' + esc(nx.label || TYPES[nx.t].label) : '马上好啦'}</div>
+    <div class="next">${nx ? '下一步 ' + tI(nx.t) + esc(nx.label || TYPES[nx.t].label) : '马上好啦'}</div>
     <div class="ctrl">
-      <button class="rb xl pp" style="--k:${T.c}" data-act="pause" aria-label="暂停或继续">${brew.paused ? '▶' : '⏸'}</button>
-      <button class="rb" style="--k:#7a8798;font-size:26px" data-act="skip" aria-label="下一步">⏭</button>
+      <button class="rb xl pp" style="--k:${T.c}" data-act="pause" aria-label="暂停或继续">${I(brew.paused ? 'play' : 'pause')}</button>
+      <button class="rb" style="--k:#7a8798" data-act="skip" aria-label="下一步">${I('skip')}</button>
     </div></div>`, anim, 'dark');
   paint();
 }
@@ -379,10 +405,10 @@ function tick(){
 function done(){
   let left = '';
   const b = db.beans.find(x => x.id === cur.bean);
-  if (b) { b.grams = Math.max(0, Math.round((b.grams || 0) - cur.coffee * cups)); save(); left = `🫘 ${esc(b.name)} 还剩 ${b.grams} 克`; }
-  show(`<div class="done"><div class="e">☕</div><div class="t">好啦!</div><div class="left">${left}</div>
-    <button class="big" data-act="again">🔁 再来一杯</button>
-    <button class="big gray" data-act="home2">🏠 回首页</button></div>`, 'fade', 'dark');
+  if (b) { b.grams = Math.max(0, Math.round((b.grams || 0) - cur.coffee * cups)); save(); left = `${I('bean','c-brown')}${esc(b.name)} 还剩 ${b.grams} 克`; }
+  show(`<div class="done"><div class="e">${I('cup','c-white sh')}</div><div class="t">好啦!</div><div class="left">${left}</div>
+    <button class="big" data-act="again">${I('repeat')}再来一杯</button>
+    <button class="big gray" data-act="home2">${I('home')}回首页</button></div>`, 'fade', 'dark');
 }
 
 /* ---------- 豆子 ---------- */
@@ -390,10 +416,10 @@ function days(d){ const t = Date.parse(d); return isNaN(t) ? null : Math.floor((
 function beans(anim){
   show(nav('我的豆子', null, {act:'newBean', label:'＋', plus:true, aria:'添加豆子'}) + `<div class="body">` +
     (db.beans.length ? `<div class="group">` + db.beans.map(b => { const n = days(b.roastDate);
-      return `<button class="row" data-act="editBean" data-id="${esc(b.id)}"><span class="ri">🫘</span>
+      return `<button class="row" data-act="editBean" data-id="${esc(b.id)}"><span class="ri">${I('bean','c-brown')}</span>
         <span class="tx">${esc(b.name)}<span class="sub">${[b.roaster, b.origin, ROAST[b.roast] + '烘', n !== null && n >= 0 ? '烘好第 ' + n + ' 天' : '', '剩 ' + Math.round(b.grams || 0) + ' 克'].filter(Boolean).map(esc).join(' · ')}</span></span>
         <span class="chev">›</span></button>`; }).join('') + `</div>`
-     : `<div class="empty"><div class="e">🫘</div><div class="t">还没有豆子</div></div><button class="big" data-act="newBean">＋ 添加豆子</button>`) +
+     : `<div class="empty"><div class="e">${I('bean','c-slate')}</div><div class="t">还没有豆子</div></div><button class="big" data-act="newBean">＋ 添加豆子</button>`) +
     `</div>` + tabs('beans'), anim);
 }
 const BEAN_FIELDS = [
@@ -411,10 +437,10 @@ function beanForm(b){
 
 /* ---------- 器具 ---------- */
 function gear(anim){
-  show(nav('我的器具') + `<div class="body">` + Object.keys(KINDS).map(k => `<div class="gh">${KINDS[k].icon} ${KINDS[k].label}</div><div class="group">` +
-    db.gear.filter(x => x.kind === k).map(x => `<button class="row" data-act="editGear" data-id="${esc(x.id)}"><span class="ri">${KINDS[k].icon}</span>
+  show(nav('我的器具') + `<div class="body">` + Object.keys(KINDS).map(k => `<div class="gh">${I(KINDS[k].icon)}${KINDS[k].label}</div><div class="group">` +
+    db.gear.filter(x => x.kind === k).map(x => `<button class="row" data-act="editGear" data-id="${esc(x.id)}"><span class="ri">${I(KINDS[k].icon,'c-slate')}</span>
       <span class="tx">${esc(x.name)}${x.note ? `<span class="sub">${esc(x.note)}</span>` : ''}</span><span class="chev">›</span></button>`).join('') +
-    `<button class="row add" data-act="newGear" data-kind="${k}"><span class="ri">➕</span><span class="tx">添加${KINDS[k].label}</span></button></div>`).join('') +
+    `<button class="row add" data-act="newGear" data-kind="${k}"><span class="ri">${I('plus','c-green')}</span><span class="tx">添加${KINDS[k].label}</span></button></div>`).join('') +
     `</div>` + tabs('gear'), anim);
 }
 function gearForm(x, kind){
@@ -439,13 +465,13 @@ function drawForm(anim, err){
       ? `<div class="seg">${f.opts.map((t,i) => `<button type="button" data-act="seg" data-k="${f.k}" data-v="${i}" class="${o[f.k]===i?'on':''}">${t}</button>`).join('')}</div>`
       : `<input data-ff="${f.k}" type="${f.type || 'text'}" ${f.type === 'number' ? 'inputmode="decimal"' : ''} value="${esc(o[f.k])}" placeholder="${esc(f.ph || '')}">`) + `</label>`).join('') +
     `</div><div class="err">${err || ''}</div>
-    <button class="big" data-act="formSave">✔ 保存</button>
-    ${F.isNew ? '' : `<div class="gap"></div><button class="big red sm" data-act="formDel">🗑 删除</button>`}</div>`, anim === undefined ? 0 : anim);
+    <button class="big" data-act="formSave">${I('check')}保存</button>
+    ${F.isNew ? '' : `<div class="gap"></div><button class="big red sm" data-act="formDel">${I('trash')}删除</button>`}</div>`, anim === undefined ? 0 : anim);
 }
 
 /* ---------- 配方编辑 ---------- */
 function editRecipe(r){
-  draft = r ? clone(r) : {id:'', name:'', emo:'☕', coffee:15, water:240, temp:92, grind:2, video:'',
+  draft = r ? clone(r) : {id:'', name:'', emo:'cup', coffee:15, water:240, temp:92, grind:2, video:'',
     steps:[{t:'pour',s:10,to:30},{t:'wait',s:25},{t:'pour',s:30,to:240},{t:'wait',s:60}]};
   drawEdit('push');
 }
@@ -454,27 +480,27 @@ function drawEdit(anim, err){
   show(nav(d.id ? '修改配方' : '新配方', {act:'editBack', label:'返回'}, {act:'saveRecipe', label:'保存'}) + `<div class="body">
     <div class="group"><label class="fl"><span>名字</span><input data-f="name" value="${esc(d.name)}" placeholder="我的配方" maxlength="12"></label></div>
     <div class="gh">图标</div>
-    <div class="group"><div class="emos">${EMOJIS.map(e => `<button data-act="emo" data-e="${e}" class="${e===d.emo?'on':''}">${e}</button>`).join('')}</div></div>
+    <div class="group"><div class="emos">${EMOJIS.map(e => `<button data-act="emo" data-e="${e}" class="${e===rIcon(d)?'on':''}" aria-label="${e}">${I(e,'c-slate')}</button>`).join('')}</div></div>
     <div class="gh">一杯的用量</div>
     <div class="group">
-      <label class="fl"><span>🫘 咖啡粉(克)</span><input data-f="coffee" type="number" inputmode="decimal" value="${esc(d.coffee)}"></label>
-      <label class="fl"><span>💧 水(克)</span><input data-f="water" type="number" inputmode="decimal" value="${esc(d.water)}"></label>
-      <label class="fl"><span>🌡️ 水温(°C)</span><input data-f="temp" type="number" inputmode="decimal" value="${esc(d.temp)}"></label>
-      <label class="fl"><span>⚙️ 磨多细</span><div class="seg">${GRIND.map((g,i) => `<button type="button" data-act="grind" data-v="${i}" class="${i===d.grind?'on':''}" style="font-size:15px">${g}</button>`).join('')}</div></label>
+      <label class="fl"><span>${I('bean','c-brown')}咖啡粉(克)</span><input data-f="coffee" type="number" inputmode="decimal" value="${esc(d.coffee)}"></label>
+      <label class="fl"><span>${I('drop','c-blue')}水(克)</span><input data-f="water" type="number" inputmode="decimal" value="${esc(d.water)}"></label>
+      <label class="fl"><span>${I('thermo','c-red')}水温(°C)</span><input data-f="temp" type="number" inputmode="decimal" value="${esc(d.temp)}"></label>
+      <label class="fl"><span>${I('grinder','c-slate')}磨多细</span><div class="seg">${GRIND.map((g,i) => `<button type="button" data-act="grind" data-v="${i}" class="${i===d.grind?'on':''}" style="font-size:13px">${g}</button>`).join('')}</div></label>
     </div>
     <div class="gh">步骤</div>
     <div class="shead"><span>做什么</span><span>多少秒</span><span>倒到几克</span><span></span></div>
     <div class="group">${d.steps.map((s,i) => `<div class="srow">
-      <select data-s="${i}" data-k="t">${['pour','wait','stir','press'].map(t => `<option value="${t}" ${t===s.t?'selected':''}>${TYPES[t].icon} ${TYPES[t].label}</option>`).join('')}</select>
+      <select data-s="${i}" data-k="t">${['pour','wait','stir','press'].map(t => `<option value="${t}" ${t===s.t?'selected':''}>${TYPES[t].label}</option>`).join('')}</select>
       <input data-s="${i}" data-k="s" type="number" inputmode="numeric" value="${esc(s.s)}" aria-label="秒">
       ${s.t === 'pour' ? `<input data-s="${i}" data-k="to" type="number" inputmode="decimal" value="${esc(s.to)}" aria-label="倒到几克">` : '<span></span>'}
       <button class="x" data-act="rmstep" data-i="${i}" aria-label="删掉这一步">−</button></div>`).join('')}
-      <button class="row add" data-act="addstep"><span class="ri">➕</span><span class="tx">加一步</span></button></div>
-    <div class="gh">🎬 视频链接</div>
+      <button class="row add" data-act="addstep"><span class="ri">${I('plus','c-green')}</span><span class="tx">加一步</span></button></div>
+    <div class="gh">${I('video')}视频链接</div>
     <div class="group"><label class="fl"><input data-f="video" type="url" inputmode="url" value="${esc(d.video)}" placeholder="贴上 BBB 啡常好咖 的视频网址"></label></div>
     <div class="err">${err || ''}</div>
-    <button class="big" data-act="saveRecipe">✔ 保存</button>
-    ${d.id ? `<div class="gap"></div><button class="big red sm" data-act="delRecipe">🗑 删除配方</button>` : ''}</div>`, anim === undefined ? 0 : anim);
+    <button class="big" data-act="saveRecipe">${I('check')}保存</button>
+    ${d.id ? `<div class="gap"></div><button class="big red sm" data-act="delRecipe">${I('trash')}删除配方</button>` : ''}</div>`, anim === undefined ? 0 : anim);
 }
 function saveRecipe(){
   const d = draft, bad = m => drawEdit(0, m);
@@ -502,7 +528,7 @@ const ACT = {
   start(){ startBrew('up'); },
   again(){ startBrew('fade'); },
   quit(){ stopBrew(); recipe('down'); },
-  pause(b){ brew.paused = !brew.paused; brew.last = performance.now(); b.textContent = brew.paused ? '▶' : '⏸'; },
+  pause(b){ brew.paused = !brew.paused; brew.last = performance.now(); b.innerHTML = I(brew.paused ? 'play' : 'pause'); },
   skip(){ nextStep(); },
   newRecipe(){ editRecipe(null); },
   editRecipe(){ editRecipe(cur); },
