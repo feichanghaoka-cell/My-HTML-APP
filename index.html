@@ -718,10 +718,13 @@
     $('week-goal').onchange = () => { data.weekGoal = Number($('week-goal').value); save(); render(); };
 
     $('btn-export').onclick = () => {
+      const name = '爬坡打卡备份-' + todayStr() + '.json';
+      // 安卓 App 里没有浏览器下载，交给外壳用系统文件选择器保存
+      if (window.AndroidBridge) { window.AndroidBridge.exportBackup(JSON.stringify(data, null, 2), name); return; }
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = '爬坡打卡备份-' + todayStr() + '.json';
+      a.download = name;
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     };

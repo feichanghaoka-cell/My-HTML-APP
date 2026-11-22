@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">爬坡打卡</string>
+    <color name="bg">#F2F2F7</color>
+    <color name="icon_bg">#34C759</color>
+</resources>
