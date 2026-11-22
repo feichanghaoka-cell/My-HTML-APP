@@ -54,30 +54,29 @@ public class MainActivity extends Activity {
                 return true;
             }
         });
-        web.addJavascriptInterface(new Bridge(), "AndroidBridge");
+        web.addJavascriptInterface(this, "AndroidBridge");
         web.loadUrl("file:///android_asset/index.html");
     }
 
-    private class Bridge {
-        @JavascriptInterface
-        public void exportBackup(final String json, final String fileName) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    pendingExport = json;
-                    Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-                    i.addCategory(Intent.CATEGORY_OPENABLE);
-                    i.setType("application/json");
-                    i.putExtra(Intent.EXTRA_TITLE, fileName);
-                    try {
-                        startActivityForResult(i, REQ_EXPORT);
-                    } catch (ActivityNotFoundException e) {
-                        pendingExport = null;
-                        toast("这台手机没有可用的文件管理器");
-                    }
+    // Called from the page's JavaScript as AndroidBridge.exportBackup(...).
+    @JavascriptInterface
+    public void exportBackup(final String json, final String fileName) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                pendingExport = json;
+                Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                i.addCategory(Intent.CATEGORY_OPENABLE);
+                i.setType("application/json");
+                i.putExtra(Intent.EXTRA_TITLE, fileName);
+                try {
+                    startActivityForResult(i, REQ_EXPORT);
+                } catch (ActivityNotFoundException e) {
+                    pendingExport = null;
+                    toast("这台手机没有可用的文件管理器");
                 }
-            });
-        }
+            }
+        });
     }
 
     @Override

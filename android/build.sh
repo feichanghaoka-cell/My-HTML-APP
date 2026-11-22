@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Packages ../index.html into an Android APK (a WebView shell). No Gradle needed.
-# Requires: JDK, and an Android SDK with platforms;android-34 and build-tools;34.0.0.
+# Requires: JDK, and an Android SDK with platforms;android-34 and build-tools;35.0.0.
 #   ANDROID_HOME  path to the SDK
 #   KEYSTORE      signing keystore (created on first run if missing). Keep the same
 #                 file for every release, or phones will refuse to update the app.
@@ -13,7 +13,7 @@ VERSION_NAME=1.0
 : "${ANDROID_HOME:?set ANDROID_HOME to the Android SDK path}"
 KEYSTORE=${KEYSTORE:-$HOME/.climb-checkin.jks}
 KS_PASS=${KS_PASS:-android}
-BT=$ANDROID_HOME/build-tools/34.0.0
+BT=$ANDROID_HOME/build-tools/35.0.0
 JAR=$ANDROID_HOME/platforms/android-34/android.jar
 
 rm -rf build && mkdir -p build/assets build/gen build/classes build/dex
