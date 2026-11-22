@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#f2f2f7" />
+  <title>爬坡打卡</title>
+  <style>
+    :root {
+      --bg: #f2f2f7;
+      --card: #ffffff;
+      --primary: #34c759;
+      --primary-dark: #248a3d;
+      --primary-soft: rgba(52, 199, 89, 0.14);
+      --text: #1d1d1f;
+      --sub: #86868b;
+      --danger: #ff3b30;
+      --border: rgba(0, 0, 0, 0.08);
+      --field: #f5f5f7;
+      --radius-lg: 20px;
+      --radius-md: 12px;
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000000;
+        --card: #1c1c1e;
+        --primary: #30d158;
+        --primary-dark: #30d158;
+        --primary-soft: rgba(48, 209, 88, 0.18);
+        --text: #f5f5f7;
+        --sub: #98989d;
+        --danger: #ff453a;
+        --border: rgba(255, 255, 255, 0.1);
+        --field: #2c2c2e;
+        --shadow: none;
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Helvetica Neue", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px 16px 80px;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 440px; margin: 0 auto; }
+
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+    .today-label { font-size: 13px; color: var(--sub); font-weight: 600; }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+
+    .section-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+
+    /* 概览 */
+    .hero { text-align: center; }
+    .hero-label { font-size: 13px; color: var(--sub); font-weight: 600; }
+    .hero-num { font-size: 52px; font-weight: 700; letter-spacing: -1.5px; color: var(--primary-dark); line-height: 1.1; margin: 4px 0; }
+    .hero-num small { font-size: 18px; font-weight: 600; margin-left: 4px; }
+    .hero-status { font-size: 13px; color: var(--sub); margin-bottom: 14px; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; border-top: 1px solid var(--border); padding-top: 14px; }
+    .stat-val { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .stat-lab { font-size: 11px; color: var(--sub); margin-top: 2px; }
+    .fun { font-size: 12px; color: var(--sub); margin-top: 12px; }
+
+    /* 表单 */
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .field label { display: block; font-size: 12px; color: var(--sub); font-weight: 600; margin-bottom: 4px; }
+    .field input {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: var(--field);
+      color: var(--text);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      font-size: 16px;
+      outline: none;
+      font-family: inherit;
+      min-height: 44px;
+    }
+    .field input:focus { border-color: var(--primary); }
+    .field.full { grid-column: 1 / -1; }
+    .preview { font-size: 13px; color: var(--sub); margin: 12px 0; min-height: 18px; }
+    .preview b { color: var(--text); font-weight: 600; }
+
+    .btn {
+      width: 100%;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn:active { opacity: 0.8; }
+    .link-btn { white-space: nowrap; flex-shrink: 0; background: none; border: none; color: var(--primary-dark); font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; padding: 4px; }
+    .link-btn.danger { color: var(--danger); }
+
+    /* 近 7 天 */
+    .bars { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; height: 110px; }
+    .bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+    .bar-val { font-size: 10px; color: var(--sub); margin-bottom: 3px; font-variant-numeric: tabular-nums; }
+    .bar { width: 100%; max-width: 26px; background: var(--primary); border-radius: 6px 6px 2px 2px; min-height: 3px; }
+    .bar.empty { background: var(--border); }
+    .bar-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 6px; text-align: center; font-size: 11px; color: var(--sub); }
+    .bar-days .is-today { color: var(--primary-dark); font-weight: 700; }
+
+    /* 日历 */
+    .cal-nav { display: flex; align-items: center; gap: 6px; }
+    .cal-nav button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border); background: var(--field); color: var(--text); font-size: 15px; cursor: pointer; }
+    .cal-nav span { font-size: 13px; font-weight: 600; min-width: 76px; text-align: center; font-variant-numeric: tabular-nums; }
+    .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+    .cal .wd { font-size: 11px; color: var(--sub); padding-bottom: 4px; }
+    .cal button.day {
+      aspect-ratio: 1;
+      border: none;
+      background: none;
+      color: var(--text);
+      font-size: 14px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-family: inherit;
+      font-variant-numeric: tabular-nums;
+    }
+    .cal button.day.done { background: var(--primary); color: #fff; font-weight: 700; }
+    .cal button.day.today:not(.done) { box-shadow: inset 0 0 0 2px var(--primary); }
+    .cal button.day.future { color: var(--sub); opacity: 0.5; cursor: default; }
+
+    /* 记录 */
+    .item { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .item:last-child { border-bottom: none; padding-bottom: 0; }
+    .item-main { min-width: 0; }
+    .item-title { font-size: 15px; font-weight: 600; }
+    .item-sub { font-size: 12px; color: var(--sub); margin-top: 2px; overflow-wrap: anywhere; }
+    .empty { text-align: center; color: var(--sub); font-size: 14px; padding: 16px 0; }
+
+    .progress { height: 8px; background: var(--field); border-radius: 4px; overflow: hidden; margin: 14px 0 8px; }
+    .progress div { height: 100%; width: 0; background: var(--primary); border-radius: 4px; transition: width 0.3s; }
+    .weight-msg { font-size: 13px; color: var(--sub); }
+    .weight-msg b { color: var(--text); font-weight: 600; }
+    .footer-actions { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+    .hint { font-size: 12px; color: var(--sub); margin-top: 8px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>爬坡打卡</h1>
+      <span class="today-label" id="today-label"></span>
+    </header>
+
+    <div class="card hero">
+      <div class="hero-label">连续打卡</div>
+      <div class="hero-num"><span id="streak">0</span><small>天</small></div>
+      <div class="hero-status" id="status"></div>
+      <div class="stats">
+        <div><div class="stat-val" id="month-count">0 次</div><div class="stat-lab">本月打卡</div></div>
+        <div><div class="stat-val" id="total-climb">0 m</div><div class="stat-lab">累计爬升</div></div>
+        <div><div class="stat-val" id="total-kcal">0 千卡</div><div class="stat-lab">累计消耗</div></div>
+      </div>
+      <div class="fun" id="fun"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">体重目标</div>
+      <div class="grid">
+        <div class="field"><label for="weight">目前体重（kg）</label><input type="number" id="weight" inputmode="decimal" min="20" max="250" step="0.1" placeholder="60" /></div>
+        <div class="field"><label for="target">目标体重（kg）</label><input type="number" id="target" inputmode="decimal" min="20" max="250" step="0.1" placeholder="55" /></div>
+      </div>
+      <div class="progress"><div id="weight-bar"></div></div>
+      <div class="weight-msg" id="weight-msg"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">记录一次爬坡</div>
+      <div class="grid">
+        <div class="field"><label for="f-date">日期</label><input type="date" id="f-date" /></div>
+        <div class="field"><label for="f-min">时长（分钟）</label><input type="number" id="f-min" inputmode="decimal" min="1" step="1" placeholder="30" /></div>
+        <div class="field"><label for="f-incline">坡度（%）</label><input type="number" id="f-incline" inputmode="decimal" min="0" max="40" step="0.5" placeholder="12" /></div>
+        <div class="field"><label for="f-speed">速度（km/h）</label><input type="number" id="f-speed" inputmode="decimal" min="0.5" max="20" step="0.1" placeholder="5" /></div>
+        <div class="field full"><label for="f-note">备注（可不填）</label><input type="text" id="f-note" maxlength="60" placeholder="例如：今天状态不错" /></div>
+      </div>
+      <div class="preview" id="preview"></div>
+      <button class="btn" id="btn-add">打卡</button>
+    </div>
+
+    <div class="card">
+      <div class="section-title">近 7 天（分钟）</div>
+      <div class="bars" id="bars"></div>
+      <div class="bar-days" id="bar-days"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">
+        <span>打卡日历</span>
+        <div class="cal-nav">
+          <button id="cal-prev" aria-label="上个月">‹</button>
+          <span id="cal-title"></span>
+          <button id="cal-next" aria-label="下个月">›</button>
+        </div>
+      </div>
+      <div class="cal" id="cal"></div>
+      <div class="hint">点某一天可以把日期填进上面的表单，用来补卡。</div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">打卡记录</div>
+      <div id="list"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">备份</div>
+      <div class="hint">数据只保存在这台设备的浏览器里。清除浏览器数据或换手机前，请先导出备份。</div>
+      <div class="footer-actions" style="margin-top: 10px;">
+        <button class="link-btn" id="btn-export">导出备份</button>
+        <button class="link-btn" id="btn-import">导入备份</button>
+        <input type="file" id="file-import" accept="application/json,.json" hidden />
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const KEY = 'climb_checkin_v1';
+    const $ = (id) => document.getElementById(id);
+
+    function load() {
+      try {
+        const d = JSON.parse(localStorage.getItem(KEY));
+        if (d && Array.isArray(d.records)) return normalize(d);
+      } catch (e) {}
+      return normalize({ records: [] });
+    }
+    // weight 用于估算消耗（没填时按 60kg）；startWeight 是第一次填写的体重，用来算进度
+    function normalize(d) {
+      const kg = (v) => { v = Number(v); return v >= 20 && v <= 250 ? v : null; };
+      return {
+        weight: kg(d.weight) || 60,
+        startWeight: kg(d.startWeight),
+        target: kg(d.target),
+        weightLog: Array.isArray(d.weightLog) ? d.weightLog.filter(w => w && /^\d{4}-\d{2}-\d{2}$/.test(w.date) && kg(w.kg)).map(w => ({ date: w.date, kg: Number(w.kg) })) : [],
+        records: d.records.filter(validRecord)
+      };
+    }
+    function validRecord(r) {
+      return r && /^\d{4}-\d{2}-\d{2}$/.test(r.date) && r.min > 0 && r.incline >= 0 && r.speed > 0;
+    }
+    let data = load();
+    function save() {
+      try { localStorage.setItem(KEY, JSON.stringify(data)); }
+      catch (e) { alert('保存失败：浏览器存储不可用。'); }
+    }
+
+    // 日期工具（全部按本地时间）
+    function ymd(d) {
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+    function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+    const todayStr = () => ymd(new Date());
+
+    // 计算：距离、爬升高度、消耗（ACSM 步行公式）
+    function calc(r, weight) {
+      const g = r.incline / 100;
+      const distM = r.speed * 1000 * r.min / 60;
+      const climb = distM * g / Math.sqrt(1 + g * g);
+      const v = r.speed * 1000 / 60; // 米/分钟
+      const vo2 = 0.1 * v + 1.8 * v * g + 3.5;
+      const kcal = vo2 * weight / 1000 * 5 * r.min;
+      return { distKm: distM / 1000, climb, kcal };
+    }
+
+    let calMonth = new Date(); calMonth.setDate(1);
+
+    function render() {
+      const today = todayStr();
+      const days = new Set(data.records.map(r => r.date));
+
+      // 连续天数：今天还没打卡时，从昨天往前算
+      let cur = new Date();
+      if (!days.has(today)) cur = addDays(cur, -1);
+      let streak = 0;
+      while (days.has(ymd(cur))) { streak++; cur = addDays(cur, -1); }
+      $('streak').textContent = streak;
+      $('status').textContent = days.has(today) ? '今天已打卡 ✓' : (streak > 0 ? '今天还没打卡，别断了' : '今天还没打卡');
+
+      const now = new Date();
+      $('today-label').textContent = (now.getMonth() + 1) + '月' + now.getDate() + '日 周' + '日一二三四五六'[now.getDay()];
+
+      const monthPrefix = today.slice(0, 7);
+      $('month-count').textContent = data.records.filter(r => r.date.startsWith(monthPrefix)).length + ' 次';
+
+      let climb = 0, kcal = 0;
+      data.records.forEach(r => { const c = calc(r, data.weight); climb += c.climb; kcal += c.kcal; });
+      $('total-climb').textContent = Math.round(climb).toLocaleString() + ' m';
+      $('total-kcal').textContent = Math.round(kcal).toLocaleString() + ' 千卡';
+      $('fun').textContent = climb > 0
+        ? (climb >= 8849
+            ? '累计爬升相当于 ' + (climb / 8849).toFixed(2) + ' 座珠穆朗玛峰'
+            : '累计爬升相当于 ' + (climb / 452).toFixed(1) + ' 座双子塔，离一座珠峰还差 ' + Math.round(8849 - climb).toLocaleString() + ' m')
+        : '';
+
+      renderWeight();
+      renderBars(today);
+      renderCal(days, today);
+      renderList();
+    }
+
+    function renderWeight() {
+      const msg = $('weight-msg'), bar = $('weight-bar');
+      msg.textContent = ''; bar.style.width = '0';
+      const start = data.startWeight, t = data.target, w = data.weight;
+      if (start == null) { msg.textContent = '填写目前体重和目标体重后，这里会显示进度。'; return; }
+      if (t == null) { msg.textContent = '再填写目标体重，就能看到进度。'; return; }
+      const total = start - t, done = start - w, left = Math.abs(w - t);
+      const reached = left < 0.05 || (total > 0 ? w <= t : total < 0 ? w >= t : false);
+      const pct = reached ? 100 : total === 0 ? 0 : Math.max(0, Math.min(100, done / total * 100));
+      bar.style.width = pct + '%';
+      const b = (v) => { const el = document.createElement('b'); el.textContent = v; return el; };
+      if (reached) { msg.append('已达成目标 ', b(t + ' kg'), '，保持住！'); return; }
+      msg.append('距离目标还差 ', b(left.toFixed(1) + ' kg'));
+      const moved = w - start;
+      if (Math.abs(moved) >= 0.05) msg.append('，从 ' + start + ' kg 开始已' + (moved < 0 ? '减 ' : '增 '), b(Math.abs(moved).toFixed(1) + ' kg'));
+    }
+
+    function renderBars(today) {
+      const bars = $('bars'), labels = $('bar-days');
+      bars.textContent = ''; labels.textContent = '';
+      const list = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = addDays(new Date(), -i), key = ymd(d);
+        const mins = data.records.filter(r => r.date === key).reduce((s, r) => s + r.min, 0);
+        list.push({ key, mins, wd: '日一二三四五六'[d.getDay()] });
+      }
+      const max = Math.max(...list.map(x => x.mins), 1);
+      list.forEach(x => {
+        const col = document.createElement('div'); col.className = 'bar-col';
+        const val = document.createElement('div'); val.className = 'bar-val'; val.textContent = x.mins ? Math.round(x.mins) : '';
+        const bar = document.createElement('div'); bar.className = 'bar' + (x.mins ? '' : ' empty');
+        bar.style.height = x.mins ? Math.max(6, x.mins / max * 80) + 'px' : '3px';
+        col.append(val, bar); bars.append(col);
+        const lab = document.createElement('div'); lab.textContent = x.wd;
+        if (x.key === today) lab.className = 'is-today';
+        labels.append(lab);
+      });
+    }
+
+    function renderCal(days, today) {
+      const cal = $('cal'); cal.textContent = '';
+      const y = calMonth.getFullYear(), m = calMonth.getMonth();
+      $('cal-title').textContent = y + '年' + (m + 1) + '月';
+      '日一二三四五六'.split('').forEach(w => {
+        const el = document.createElement('div'); el.className = 'wd'; el.textContent = w; cal.append(el);
+      });
+      const first = new Date(y, m, 1).getDay();
+      for (let i = 0; i < first; i++) cal.append(document.createElement('div'));
+      const count = new Date(y, m + 1, 0).getDate();
+      for (let d = 1; d <= count; d++) {
+        const key = ymd(new Date(y, m, d));
+        const b = document.createElement('button');
+        b.className = 'day'; b.textContent = d;
+        if (days.has(key)) b.classList.add('done');
+        if (key === today) b.classList.add('today');
+        if (key > today) { b.classList.add('future'); b.disabled = true; }
+        else b.onclick = () => { $('f-date').value = key; $('f-min').focus(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+        cal.append(b);
+      }
+    }
+
+    function renderList() {
+      const list = $('list'); list.textContent = '';
+      if (!data.records.length) {
+        const e = document.createElement('div'); e.className = 'empty'; e.textContent = '还没有记录，完成第一次爬坡吧';
+        list.append(e); return;
+      }
+      const sorted = [...data.records].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+      sorted.slice(0, 60).forEach(r => {
+        const c = calc(r, data.weight);
+        const row = document.createElement('div'); row.className = 'item';
+        const main = document.createElement('div'); main.className = 'item-main';
+        const t = document.createElement('div'); t.className = 'item-title';
+        t.textContent = r.date.slice(5).replace('-', '月') + '日 · ' + r.min + ' 分钟 · 坡度 ' + r.incline + '%';
+        const s = document.createElement('div'); s.className = 'item-sub';
+        s.textContent = r.speed + ' km/h · ' + c.distKm.toFixed(2) + ' km · 爬升 ' + Math.round(c.climb) + ' m · ' + Math.round(c.kcal) + ' 千卡' + (r.note ? ' · ' + r.note : '');
+        main.append(t, s);
+        const del = document.createElement('button'); del.className = 'link-btn danger'; del.textContent = '删除';
+        del.onclick = () => {
+          if (!confirm('删除 ' + r.date + ' 的这条记录？')) return;
+          data.records = data.records.filter(x => x.id !== r.id); save(); render();
+        };
+        row.append(main, del); list.append(row);
+      });
+    }
+
+    function readForm() {
+      return {
+        date: $('f-date').value,
+        min: parseFloat($('f-min').value),
+        incline: parseFloat($('f-incline').value),
+        speed: parseFloat($('f-speed').value),
+        note: $('f-note').value.trim()
+      };
+    }
+
+    function updatePreview() {
+      const r = readForm();
+      const p = $('preview'); p.textContent = '';
+      if (!(r.min > 0 && r.incline >= 0 && r.speed > 0)) return;
+      const c = calc(r, data.weight);
+      p.append('预计 ');
+      [[c.distKm.toFixed(2) + ' km', ' · 爬升 '], [Math.round(c.climb) + ' m', ' · 约 '], [Math.round(c.kcal) + ' 千卡', '']].forEach(([v, sep]) => {
+        const b = document.createElement('b'); b.textContent = v; p.append(b, sep);
+      });
+    }
+
+    $('btn-add').onclick = () => {
+      const r = readForm();
+      if (!r.date) return alert('请选择日期');
+      if (r.date > todayStr()) return alert('不能给未来的日期打卡');
+      if (!(r.min > 0)) return alert('请填写时长');
+      if (!(r.incline >= 0)) return alert('请填写坡度');
+      if (!(r.speed > 0)) return alert('请填写速度');
+      r.id = Date.now();
+      data.records.push(r); save();
+      // 保留坡度和速度，下次不用重填
+      $('f-min').value = ''; $('f-note').value = ''; $('f-date').value = todayStr();
+      updatePreview(); render();
+    };
+
+    ['f-min', 'f-incline', 'f-speed'].forEach(id => $(id).addEventListener('input', updatePreview));
+
+    $('cal-prev').onclick = () => { calMonth.setMonth(calMonth.getMonth() - 1); render(); };
+    $('cal-next').onclick = () => { calMonth.setMonth(calMonth.getMonth() + 1); render(); };
+
+    $('weight').onchange = () => {
+      const w = parseFloat($('weight').value);
+      if (!(w >= 20 && w <= 250)) { $('weight').value = data.startWeight == null ? '' : data.weight; return; }
+      data.weight = w;
+      if (data.startWeight == null) data.startWeight = w;
+      const today = todayStr();
+      data.weightLog = data.weightLog.filter(x => x.date !== today);
+      data.weightLog.push({ date: today, kg: w });
+      save(); render(); updatePreview();
+    };
+    $('target').onchange = () => {
+      const t = parseFloat($('target').value);
+      if ($('target').value === '') data.target = null;
+      else if (t >= 20 && t <= 250) data.target = t;
+      else { $('target').value = data.target == null ? '' : data.target; return; }
+      save(); render();
+    };
+
+    $('btn-export').onclick = () => {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = '爬坡打卡备份-' + todayStr() + '.json';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    };
+    $('btn-import').onclick = () => $('file-import').click();
+    $('file-import').onchange = async (e) => {
+      const file = e.target.files[0]; e.target.value = '';
+      if (!file) return;
+      try {
+        const d = JSON.parse(await file.text());
+        if (!d || !Array.isArray(d.records)) throw new Error();
+        const recs = d.records.filter(validRecord).map((r, i) => ({
+          id: Number(r.id) || Date.now() + i, date: r.date, min: Number(r.min), incline: Number(r.incline), speed: Number(r.speed), note: String(r.note || '').slice(0, 60)
+        }));
+        if (!confirm('将用备份中的 ' + recs.length + ' 条记录替换当前的 ' + data.records.length + ' 条记录，确定吗？')) return;
+        data = normalize({ ...d, records: recs });
+        save(); init();
+      } catch (err) { alert('这个文件不是有效的备份。'); }
+    };
+
+    function init() {
+      $('f-date').value = todayStr();
+      $('f-date').max = todayStr();
+      $('weight').value = data.startWeight == null ? '' : data.weight;
+      $('target').value = data.target == null ? '' : data.target;
+      const last = [...data.records].sort((a, b) => b.id - a.id)[0];
+      if (last) { $('f-incline').value = last.incline; $('f-speed').value = last.speed; }
+      updatePreview(); render();
+    }
+    init();
+  </script>
+</body>
+</html>
