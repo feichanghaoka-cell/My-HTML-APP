@@ -1,11 +1,11 @@
 /* 暖流 Service Worker：离线缓存 + 提醒通知 */
 importScripts('./js/shared.js');
 
-const CACHE = 'nuanliu-v7';
+const CACHE = 'nuanliu-v8';
 const ICON_CACHE = 'nuanliu-icons-v1';
 const SHELL = [
   './', './index.html', './css/styles.css',
-  './js/shared.js', './js/charts.js', './js/app.js',
+  './js/shared.js', './js/charts.js', './js/insights.js', './js/app.js',
   './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png',
 ];
 

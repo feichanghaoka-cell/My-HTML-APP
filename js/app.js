@@ -253,6 +253,7 @@
         <div class="hero-label">总资产<span>${relDay(latest)}</span></div>
         <div id="hero-total" class="hero-total">${money(ui.shownTotal, 'hero-num')}</div>
         ${delta === null ? '' : `<div class="chip ${delta < 0 ? 'down' : 'up'}">${delta < 0 ? '▼' : '▲'} 较上次记录 ${signed(delta)}</div>`}
+        ${state.settings.showTips ? quoteHtml() : ''}
         ${t.debt > 0 ? `<div class="net">净资产 <b>RM ${fmt(t.net)}</b><span>已扣掉负债 RM ${fmt(t.debt)}</span></div>` : ''}
       </section>
 
@@ -269,6 +270,8 @@
       </section>
 
       ${budgetCard(latest)}
+
+      ${tipsCard()}
 
       <section class="tiles">
         ${tileTypes.map((ty) => `<div class="card tile">
@@ -327,8 +330,52 @@
       haptic();
       drawTrend();
     }));
+    bindQuote();
+    const more = $('#tips-more');
+    if (more) more.onclick = () => { ui.tipsAll = true; render(); };
     const fix = $('#fix-spend');
     if (fix) fix.onclick = () => openSpendFix(latest);
+  }
+
+  /** 每日一句：点一下换一句 */
+  function quoteHtml() {
+    const q = Insights.quoteOf(todayStr(), ui.quoteOffset || 0);
+    return `<button type="button" class="quote" id="quote" aria-label="换一句">
+      <span class="quote-text">“${esc(q.zh)}”</span>
+      ${q.en ? `<span class="quote-en">${esc(q.en)}</span>` : ''}
+      <span class="quote-by">— ${esc(q.by)}</span></button>`;
+  }
+
+  function bindQuote() {
+    const el = $('#quote');
+    if (!el) return;
+    el.onclick = () => {
+      ui.quoteOffset = (ui.quoteOffset || 0) + 1;
+      haptic();
+      el.outerHTML = quoteHtml();
+      $('#quote').classList.add('swap');
+      bindQuote();
+    };
+  }
+
+  /** 根据你的数字给的建议：先显示最重要的 3 条，并尽量带一条鼓励 */
+  function tipsCard() {
+    if (!state.settings.showTips) return '';
+    const all = Insights.insights(state, todayStr(), fmt);
+    if (!all.length) return '';
+    let shown = all;
+    if (!ui.tipsAll && all.length > 3) {
+      const good = all.find((x) => x.level === 'good');
+      shown = all.filter((x) => x.level !== 'good').slice(0, good ? 2 : 3);
+      if (good) shown.push(good);
+    }
+    return `<section class="card tips">
+      <div class="card-head"><h3>给你的建议</h3><span class="muted">按你最近的数字</span></div>
+      <ul>${shown.map((x) => `<li class="tip ${x.level}"><span class="tip-icon" aria-hidden="true">${x.icon}</span>
+        <div><strong>${esc(x.title)}</strong><p>${esc(x.text)}</p></div></li>`).join('')}</ul>
+      ${all.length > shown.length ? `<button type="button" class="btn add" id="tips-more">看全部 ${all.length} 条</button>` : ''}
+      <p class="fine">由 App 按你的记录自动整理，只供参考，不是专业理财意见。</p>
+    </section>`;
   }
 
   /** 总览里的负债卡片：每笔还欠多少、比上次多了还是少了 */
@@ -784,6 +831,12 @@
       </section>
 
       <section class="card">
+        <h3>建议与名言</h3>
+        <label class="field inline"><span>总览显示理财建议和每日一句</span>
+          <input id="set-tips" type="checkbox" class="switch" role="switch" ${s.showTips ? 'checked' : ''}></label>
+      </section>
+
+      <section class="card">
         <div class="card-head"><h3>账户</h3><span class="muted">${accounts.length} 个</span></div>
         <ul class="rows">${accounts.map((a, i) => {
           const ty = typeOf(a.type);
@@ -844,6 +897,7 @@
 
     $('#set-budget').onchange = (e) => { state.settings.dailyBudget = Math.max(0, parseNum(e.target.value) || 0); save(); toast('已更新每日预算'); };
     $('#set-hide').onchange = (e) => { state.settings.hideAmounts = e.target.checked; haptic(); save(); };
+    $('#set-tips').onchange = (e) => { state.settings.showTips = e.target.checked; haptic(); save(); };
     $('#set-time').onchange = (e) => { state.settings.reminderTime = e.target.value || '21:00'; save(); scheduleReminder(); render(); };
     $('#set-days').onchange = (e) => { state.settings.billRemindDays = Math.min(15, Math.max(0, parseInt(e.target.value, 10) || 0)); save(); };
 
