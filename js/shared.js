@@ -113,6 +113,7 @@
       billMonths: {},
       clients: [],
       incomeMonths: {},
+      receivables: [],
     };
   }
 
@@ -124,6 +125,7 @@
     s.settings = Object.assign({}, d.settings, s.settings || {});
     for (const k of ['accounts', 'bills', 'clients']) if (!Array.isArray(s[k])) s[k] = k === 'clients' ? [] : d[k];
     for (const k of ['snapshots', 'billMonths', 'incomeMonths']) if (!s[k] || typeof s[k] !== 'object' || Array.isArray(s[k])) s[k] = {};
+    if (!Array.isArray(s.receivables)) s.receivables = [];
 
     // 导入的文件可能被手动改过或损坏：只保留形状正确的数据
     const str = (v, max = 80) => String(v == null ? '' : v).slice(0, max);
@@ -153,6 +155,11 @@
     const firstDate = Object.keys(s.snapshots).filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort()[0];
     const startYm = (firstDate || ymd(new Date())).slice(0, 7);
     for (const b of s.bills) if (!b.from) b.from = startYm;
+    const dOk = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+    s.receivables = s.receivables.filter(okId).map((r) => ({
+      id: r.id, name: str(r.name), amount: num(r.amount), kind: r.kind === 'loan' ? 'loan' : 'job',
+      ...(dOk(r.due) ? { due: r.due } : {}), ...(dOk(r.paidOn) ? { paidOn: r.paidOn } : {}), ...(dOk(r.added) ? { added: r.added } : {}),
+    }));
     for (const [date, snap] of Object.entries(s.snapshots)) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !snap || typeof snap.balances !== 'object' || !snap.balances) { delete s.snapshots[date]; continue; }
       const balances = {};
@@ -385,6 +392,14 @@
       .filter((r) => r.daysLeft <= n && r.daysLeft >= -31);
   }
 
+  /* ---------- 一次性收入 / 别人欠你的钱 ---------- */
+  /** 还没收到的，按到期日排；没有到期日的放最后 */
+  function openReceivables(state, today) {
+    return state.receivables.filter((r) => !r.paidOn && r.amount > 0)
+      .map((r) => Object.assign({}, r, { late: r.due && r.due < today ? diffDays(r.due, today) : 0 }))
+      .sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999'));
+  }
+
   /* ---------- 收入（仅参照） ---------- */
   function incomeForMonth(state, ym) {
     const m = state.incomeMonths[ym] || {};
@@ -414,6 +429,6 @@
   g.CF = {
     idbGet, idbSet, uid, ymd, ymOf, parseYmd, addDays, addMonths, diffDays, daysInMonth, dateInMonth,
     FX, fxRate, TYPES, ASSET_TYPES, DEBT_PRESETS, missingDebtPresets, addDebtPresets, applySeed, spendsViaDebt, billLeft, REPAY_CATS, defaultState, normalize, snapshotDates, totalsOf, prevSnapshotDate, spendOf,
-    billsForMonth, billSummary, dueBills, remindDays, incomeForMonth, overdueIncome, fmt,
+    billsForMonth, billSummary, dueBills, remindDays, incomeForMonth, overdueIncome, openReceivables, fmt,
   };
 })(self);

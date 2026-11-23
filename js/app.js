@@ -732,6 +732,25 @@
     const total = rows.reduce((a, r) => a + r.amount, 0);
     const got = rows.filter((r) => r.paid).reduce((a, r) => a + r.amount, 0);
     const older = ym === today.slice(0, 7) ? CF.overdueIncome(state, today).filter((r) => r.ym !== ym) : [];
+    const open = CF.openReceivables(state, today);
+    const openSum = open.reduce((a, r) => a + r.amount, 0);
+    // 最近 60 天收到的一次性款项
+    const recent = state.receivables.filter((r) => r.paidOn && r.paidOn >= CF.addDays(today, -60)).sort((a, b) => b.paidOn.localeCompare(a.paidOn));
+    const rRow = (r) => {
+      const late = r.due && !r.paidOn && r.due < today ? CF.diffDays(r.due, today) : 0;
+      const kind = r.kind === 'loan' ? '别人欠我' : '一次性工作';
+      const when = r.paidOn ? `${dayLabel(r.paidOn)} 收到` : r.due ? `${dayLabel(r.due)} 应收` : '没定日期';
+      const status = r.paidOn ? '<span class="tag ok">✓ 已收</span>' : late ? `<span class="tag warn">⚠ 逾期 ${late} 天</span>` : '';
+      return `<li class="row ${r.paidOn ? 'paid' : ''}">
+        <button type="button" class="check ${r.paidOn ? 'on' : ''}" data-rcv-got="${r.id}" aria-pressed="${!!r.paidOn}" aria-label="${esc(r.name)} 标记为${r.paidOn ? '未收' : '已收'}">
+          <svg viewBox="0 0 24 24"><path d="M6.500 12.500l3.500 3.500 7.500-8"/></svg></button>
+        <button type="button" class="row-body" data-rcv="${r.id}">
+          ${logo(r.name, '')}
+          <div class="row-main"><strong>${esc(r.name)}</strong>
+            <small>${kind} · ${when} ${status}</small></div>
+          <div class="row-amt">RM ${fmt(r.amount)}</div>
+        </button></li>`;
+    };
     const row = (r, showMonth) => {
       const late = !r.paid && r.amount > 0 && r.due < today ? CF.diffDays(r.due, today) : 0;
       const status = r.paid ? '<span class="tag ok">✓ 已收</span>' : late ? `<span class="tag warn">⚠ 逾期 ${late} 天</span>` : '<span class="tag">待收</span>';
@@ -756,16 +775,26 @@
           <div><span>已收</span><b>RM ${fmt(got)}</b></div>
           <div><span>待收</span><b class="${total - got > 0 ? 'accent' : ''}">RM ${fmt(total - got)}</b></div>
         </div>
+        ${open.length ? `<div class="rcv-line"><span>另外一次性 / 欠款还没收</span><b>RM ${fmt(openSum)}</b></div>` : ''}
         <p class="fine">收入只作参照，不会加进每日余额的计算。</p>
       </section>
       <section class="card">
-        <div class="card-head"><h3>客户</h3></div>
+        <div class="card-head"><h3>固定客户</h3></div>
         <ul class="rows">${rows.map((r) => row(r)).join('') || '<li class="empty">还没有客户，添加第一位吧。</li>'}</ul>
         <button type="button" class="btn add" id="add-client">＋ 添加客户</button>
       </section>
       ${older.length ? `<section class="card">
         <div class="card-head"><h3>往月未收</h3></div>
         <ul class="rows">${older.map((r) => row(r, true)).join('')}</ul>
+      </section>` : ''}
+      <section class="card">
+        <div class="card-head"><h3>一次性收入 · 待收款</h3><span class="muted">${open.length ? `还没收 RM ${fmt(openSum)}` : ''}</span></div>
+        <ul class="rows">${open.map(rRow).join('') || '<li class="empty">接案的一次性款项、别人欠你的钱，都记在这里。</li>'}</ul>
+        <button type="button" class="btn add" id="add-rcv">＋ 添加一次性收入或欠款</button>
+      </section>
+      ${recent.length ? `<section class="card">
+        <div class="card-head"><h3>最近收到的</h3><span class="muted">60 天内</span></div>
+        <ul class="rows">${recent.map(rRow).join('')}</ul>
       </section>` : ''}`;
 
     bindMonthNav('incomeYm');
@@ -778,6 +807,44 @@
     }));
     $$('[data-client]').forEach((b) => (b.onclick = () => editClient(b.dataset.client, b.dataset.ym)));
     $('#add-client').onclick = () => editClient(null, ym);
+    $$('[data-rcv-got]').forEach((b) => (b.onclick = () => {
+      const r = state.receivables.find((x) => x.id === b.dataset.rcvGot);
+      if (r.paidOn) delete r.paidOn; else r.paidOn = todayStr();
+      haptic();
+      if (r.paidOn) toast(`收到 RM ${fmt(r.amount)} ✓`);
+      save(); render();
+    }));
+    $$('[data-rcv]').forEach((b) => (b.onclick = () => editReceivable(b.dataset.rcv)));
+    $('#add-rcv').onclick = () => editReceivable(null);
+  }
+
+  /** 一次性收入 / 别人欠你的钱 */
+  function editReceivable(id) {
+    const r = id ? state.receivables.find((x) => x.id === id) : { name: '', amount: '', kind: 'job', due: '' };
+    openSheet({
+      title: id ? '编辑待收款' : '添加一次性收入或欠款',
+      fields: [
+        { key: 'kind', label: '类型', type: 'select', value: r.kind, options: [{ value: 'job', label: '一次性工作 / 案子' }, { value: 'loan', label: '别人欠我的钱（借出去的）' }] },
+        { key: 'name', label: '名称', value: r.name, placeholder: '例如 婚礼拍摄、阿明借的钱' },
+        { key: 'amount', label: '金额', type: 'money', value: r.amount },
+        { key: 'due', label: '预计哪天收到（可留空）', type: 'date', value: r.due || '', hint: '过了这天还没收到，会显示逾期并在总览提醒你。' },
+      ],
+      onSave: (v) => {
+        if (!v.name.trim()) { toast('请填写名称'); return false; }
+        const amount = parseNum(v.amount);
+        if (!amount || amount <= 0) { toast('请填写金额'); return false; }
+        const data = { name: v.name.trim(), amount, kind: v.kind === 'loan' ? 'loan' : 'job' };
+        if (/^\d{4}-\d{2}-\d{2}$/.test(v.due || '')) data.due = v.due; else delete r.due;
+        if (id) Object.assign(r, data);
+        else state.receivables.push(Object.assign({ id: CF.uid(), added: todayStr() }, data));
+        save(); render();
+      },
+      onDelete: id ? () => {
+        if (!confirm(`删除「${r.name}」？`)) return false;
+        state.receivables = state.receivables.filter((x) => x.id !== id);
+        save(); render();
+      } : null,
+    });
   }
 
   function editClient(id, ym) {

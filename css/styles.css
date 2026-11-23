@@ -115,6 +115,8 @@ main.enter { animation: page-in .28s ease-out both; }
 .debt .chip.down { color: var(--bad); }
 .debt .chip.up { color: var(--good); }
 .debt-rows { margin-top: 10px; }
+.rcv-line { display: flex; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: .5px solid var(--sep); font-size: 14px; color: var(--ink-2); }
+.rcv-line b { color: var(--tint-text); font-family: var(--rounded); }
 
 /* 每日一句 */
 .quote { display: flex; flex-direction: column; gap: 3px; width: 100%; text-align: left; margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: var(--card); transition: opacity .15s; }

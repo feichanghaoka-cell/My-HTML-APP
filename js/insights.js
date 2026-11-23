@@ -158,6 +158,18 @@
         text: `合计 ${money(sum)} 已经过了付款日。礼貌地发个提醒吧，收回来的钱可以先补备用金或还信用卡。` });
     }
 
+    // 8b. 一次性收入、别人欠你的钱
+    const rcv = CF.openReceivables(state, today);
+    if (rcv.length) {
+      const sum = rcv.reduce((x, r) => x + r.amount, 0);
+      const lateR = rcv.filter((r) => r.late > 0);
+      out.push(lateR.length
+        ? { level: 'tip', icon: '🤝', title: `有 ${lateR.length} 笔待收款过期了`,
+          text: `${lateR.slice(0, 3).map((r) => `${r.name}（${money(r.amount)}，逾期 ${r.late} 天）`).join('、')}。不好意思开口的话，发一句“方便的时候帮我处理一下”就好。合计还有 ${money(sum)} 没收回。` }
+        : { level: 'good', icon: '🤝', title: `还有 ${money(sum)} 等着收`,
+          text: `${rcv.length} 笔一次性收入或欠款还没到手。收到了记得在「收入」页打勾，先拿去补备用金或还信用卡。` });
+    }
+
     // 9. 固定收入够不够付固定开销（收入只作参照，所以这里只是估算）
     const income = CF.incomeForMonth(state, ym).reduce((x, r) => x + r.amount, 0);
     if (income > 0) {
