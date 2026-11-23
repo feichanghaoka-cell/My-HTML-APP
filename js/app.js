@@ -233,7 +233,7 @@
     const t = CF.totalsOf(state, latest);
     const prev = CF.prevSnapshotDate(state, latest);
     const delta = prev ? t.total - CF.totalsOf(state, prev).total : null;
-    const free = t.personal - bills.unpaid;
+    const free = t.personal - bills.cashUnpaid;
     const stale = latest !== today;
     // 公积金和负债是后加的类型：有这类账户时才显示，免得多出空格子
     const optional = (ty) => ty.id === 'epf' || ty.id === 'debt';
@@ -260,12 +260,12 @@
       <section class="card free">
         <div class="free-head">
           <span class="eyebrow">真正可用的钱</span>
-          <span class="free-sub">已扣掉本月未付的固定开销</span>
+          <span class="free-sub">已扣掉本月还要用现金付的开销</span>
         </div>
         <div class="free-num ${free < 0 ? 'bad' : ''}">${money(free)}</div>
         <div class="free-eq">
           <span>个人现金 <b>RM ${fmt(t.personal)}</b></span><i>−</i>
-          <a href="#bills">本月未付 <b>RM ${fmt(bills.unpaid)}</b> ›</a>
+          <a href="#bills">本月还要用现金付 <b>RM ${fmt(bills.cashUnpaid)}</b> ›</a>
         </div>
       </section>
 
@@ -632,8 +632,8 @@
         <button type="button" class="row-body" data-edit="${r.bill.id}">
           ${logo(r.bill.name, r.bill.domain)}
           <div class="row-main"><strong>${esc(r.bill.name)}</strong>
-            <small>每月 ${r.bill.day} 日 · ${(() => { const n = CF.billLeft(r.bill, ym); return n ? `还剩 ${n} 期` : esc(r.bill.category || '其他'); })()} ${status}</small></div>
-          <div class="row-amt ${r.amount ? '' : 'zero'}">${r.amount ? 'RM ' + fmt(r.amount) : '填金额'}${r.customAmount && r.bill.amount ? '<small>本月调整</small>' : ''}</div>
+            <small>每月 ${r.bill.day} 日 · ${(() => { const n = CF.billLeft(r.bill, ym); return n ? `还剩 ${n} 期` : esc(r.bill.category || '其他'); })()}${cardName(r.bill) ? ` · 刷 ${esc(cardName(r.bill))}` : ''} ${status}</small></div>
+          <div class="row-amt ${r.amount ? '' : 'zero'}">${r.amount ? 'RM ' + fmt(r.amount) : '填金额'}${r.bill.currency === 'USD' && !r.customAmount ? `<small>≈ USD ${fmt(r.bill.usd)}</small>` : r.customAmount && (r.bill.amount || r.bill.usd) ? '<small>本月调整</small>' : ''}</div>
         </button></li>`;
     };
     const isRepay = (r) => CF.REPAY_CATS.includes(r.bill.category);
@@ -673,6 +673,8 @@
     $$('[data-add]').forEach((b) => (b.onclick = () => editBill(null, ym, b.dataset.add)));
   }
 
+  const cardName = (bill) => { const a = bill.viaCard && state.accounts.find((x) => x.id === bill.viaCard); return a ? a.name : ''; };
+
   function editBill(id, ym, newCat) {
     const bill = id ? state.bills.find((b) => b.id === id) : { name: '', amount: '', day: 1, category: newCat, domain: '' };
     const rec = (id && state.billMonths[ym] && state.billMonths[ym][id]) || {};
@@ -681,11 +683,16 @@
       fields: [
         { key: 'name', label: '名称', value: bill.name, placeholder: '例如 租金、Spotify' },
         { key: 'category', label: '类别', type: 'select', value: bill.category || '其他', options: BILL_CATS.map((c) => ({ value: c, label: c })) },
-        { key: 'amount', label: '每月金额（默认）', type: 'money', value: bill.amount },
+        { key: 'currency', label: '货币', type: 'select', value: bill.currency === 'USD' ? 'USD' : 'RM',
+          options: [{ value: 'RM', label: 'RM 令吉' }, { value: 'USD', label: 'USD 美元（按设置里的汇率换算）' }] },
+        { key: 'amount', label: '每月金额（默认，按上面的货币填）', type: 'money', value: bill.currency === 'USD' ? bill.usd : bill.amount },
         ...(id ? [{ key: 'month', label: `${monthLabel(ym)}的金额`, type: 'money', value: typeof rec.amount === 'number' ? rec.amount : '', placeholder: '留空 = 用默认金额', hint: '这个月金额不一样时填这里，只影响这个月。' }] : []),
         { key: 'day', label: '扣款日（每月几号）', type: 'int', value: bill.day },
         { key: 'until', label: '最后一期（分期用，可留空）', type: 'month', value: bill.until || '', hint: '过了这个月就不再出现、也不再提醒。' },
         { key: 'domain', label: '品牌网址（用来抓 logo，可留空）', value: bill.domain, placeholder: '例如 spotify.com' },
+        { key: 'viaCard', label: '用哪张信用卡付？', type: 'select', value: bill.viaCard || '',
+          options: [{ value: '', label: '不是信用卡（现金 / 银行自动扣账）' }, ...state.accounts.filter((a) => a.type === 'debt' && !a.deleted).map((a) => ({ value: a.id, label: a.name }))],
+          hint: '刷卡付的不会马上用到现金，所以不会从“真正可用的钱”里扣掉。' },
       ],
       onSave: (v) => {
         if (!v.name.trim()) { toast('请填写名称'); return false; }
@@ -694,6 +701,8 @@
           day: Math.min(31, Math.max(1, parseInt(v.day, 10) || 1)), domain: cleanDomain(v.domain),
         };
         if (/^\d{4}-\d{2}$/.test(v.until || '')) data.until = v.until; else delete bill.until;
+        if (v.currency === 'USD') Object.assign(data, { currency: 'USD', usd: data.amount, amount: 0 }); else { delete bill.currency; delete bill.usd; }
+        if (v.viaCard) data.viaCard = v.viaCard; else delete bill.viaCard;
         if (id) {
           Object.assign(bill, data);
           const m = state.billMonths[ym] || (state.billMonths[ym] = {});
@@ -821,6 +830,9 @@
         <h3>每日预算</h3>
         <label class="field inline"><span>个人每日预算</span>
           <div class="in-money"><span>RM</span><input id="set-budget" type="text" inputmode="decimal" value="${esc(numStr(s.dailyBudget))}"></div></label>
+        <label class="field inline"><span>美元汇率（1 USD =）</span>
+          <div class="in-money"><span>RM</span><input id="set-usd" type="text" inputmode="decimal" value="${esc(numStr(s.usdRate))}"></div></label>
+        <p class="fine">用来换算美元订阅。信用卡刷外币通常比市场汇率贵 1–2%，可以对照信用卡账单调整。</p>
       </section>
 
       <section class="card">
@@ -895,6 +907,7 @@
         <p class="fine">暖流 · 第一版 · 所有数据仅保存在本机</p>
       </section>`;
 
+    $('#set-usd').onchange = (e) => { const r = parseNum(e.target.value); if (r > 0) { state.settings.usdRate = r; save(); toast('已更新汇率'); } };
     $('#set-budget').onchange = (e) => { state.settings.dailyBudget = Math.max(0, parseNum(e.target.value) || 0); save(); toast('已更新每日预算'); };
     $('#set-hide').onchange = (e) => { state.settings.hideAmounts = e.target.checked; haptic(); save(); };
     $('#set-tips').onchange = (e) => { state.settings.showTips = e.target.checked; haptic(); save(); };
@@ -1164,7 +1177,8 @@
     const seeded = CF.applySeed(state, window.NUANLIU_SEED, todayStr());
     if (seeded) {
       await save();
-      setTimeout(() => toast(`已填好 ${seeded.accounts} 笔负债和 ${seeded.bills} 项还款计划`), 900);
+      const parts = [seeded.accounts && `${seeded.accounts} 个账户`, seeded.bills && `${seeded.bills} 项开销`].filter(Boolean);
+      if (parts.length) setTimeout(() => toast(`已填好 ${parts.join('和')}`), 900);
     }
     ui.masked = !!state.settings.hideAmounts;
     $('#eye').onclick = toggleMask;

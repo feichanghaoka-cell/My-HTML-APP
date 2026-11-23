@@ -77,7 +77,7 @@
     const bill = (name, category, domain) => ({ id: uid(), name, amount: 0, day: 1, category, domain: domain || '' });
     return {
       version: 1,
-      settings: { dailyBudget: 100, reminderEnabled: false, reminderTime: '21:00', billRemindDays: 3, hideAmounts: true, showTips: true, appliedSeeds: [] },
+      settings: { dailyBudget: 100, reminderEnabled: false, reminderTime: '21:00', billRemindDays: 3, hideAmounts: true, showTips: true, usdRate: 4.2, appliedSeeds: [] },
       accounts: [
         acc('Maybank 个人', 'personal', 'maybank2u.com.my'),
         acc('Maybank 公司', 'business', 'maybank2u.com.my'),
@@ -135,6 +135,8 @@
     s.bills = s.bills.filter(okId).map((b) => ({
       id: b.id, name: str(b.name), amount: num(b.amount), day: day(b.day, 1), category: str(b.category, 20) || '其他', domain: domain(b.domain),
       ...(ymOk(b.from) ? { from: b.from } : {}), ...(ymOk(b.until) ? { until: b.until } : {}),
+      ...(b.currency === 'USD' ? { currency: 'USD', usd: num(b.usd) } : {}),
+      ...(typeof b.viaCard === 'string' && /^[\w-]{1,40}$/.test(b.viaCard) ? { viaCard: b.viaCard } : {}),
     }));
     s.clients = s.clients.filter(okId).map((c) => ({
       id: c.id, name: str(c.name), amount: num(c.amount), dueDay: day(c.dueDay, 28), domain: domain(c.domain),
@@ -162,6 +164,7 @@
     st.reminderEnabled = !!st.reminderEnabled;
     st.hideAmounts = !!st.hideAmounts;
     st.showTips = st.showTips !== false;
+    st.usdRate = num(st.usdRate) > 0 ? num(st.usdRate) : 4.2;
     st.debtPresetsApplied = !!st.debtPresetsApplied;
     st.appliedSeeds = Array.isArray(st.appliedSeeds) ? st.appliedSeeds.filter((x) => typeof x === 'string') : [];
     if (s.seedBalances && typeof s.seedBalances === 'object') {
@@ -232,6 +235,11 @@
    * 同一份只会导入一次；已有的账户按名称找到后更新，不会重复建；不会覆盖你自己填过的数字。
    */
   function applySeed(state, seed, today) {
+    if (Array.isArray(seed)) {
+      // 多份资料依次导入，合计结果
+      const res = seed.map((x) => applySeed(state, x, today)).filter(Boolean);
+      return res.length ? res.reduce((a, r) => ({ accounts: a.accounts + r.accounts, bills: a.bills + r.bills }), { accounts: 0, bills: 0 }) : null;
+    }
     if (!seed || !seed.id || state.settings.appliedSeeds.includes(seed.id)) return null;
     const live = () => state.accounts.filter((a) => !a.deleted);
     const lc = (x) => String(x).trim().toLowerCase();
@@ -256,6 +264,9 @@
       if (!bill) { bill = { id: uid() }; state.bills.push(bill); }
       Object.assign(bill, { name: s.name, category: s.category || '其他', amount: s.amount || 0, day: s.day || 1, domain: s.domain || '' });
       for (const k of ['from', 'until']) { if (s[k]) bill[k] = s[k]; else delete bill[k]; }
+      if (s.usd) Object.assign(bill, { currency: 'USD', usd: s.usd, amount: 0 }); else { delete bill.currency; delete bill.usd; }
+      const card = s.viaCardName && findBy(live(), [s.viaCardName]);
+      if (card) bill.viaCard = card.id; else delete bill.viaCard;
       for (const [ym, amount] of Object.entries(s.months || {})) {
         const m = state.billMonths[ym] || (state.billMonths[ym] = {});
         m[bill.id] = Object.assign(m[bill.id] || {}, { amount });
@@ -310,17 +321,23 @@
     const m = state.billMonths[ym] || {};
     return state.bills.filter((bill) => billActive(bill, ym)).map((bill) => {
       const rec = m[bill.id] || {};
-      const amount = typeof rec.amount === 'number' ? rec.amount : Number(bill.amount) || 0;
+      // 美元订阅按设置里的汇率换算成 RM；某个月填了实际金额就用那个
+      const base = bill.currency === 'USD' ? Math.round((Number(bill.usd) || 0) * (Number(state.settings.usdRate) || 4.2) * 100) / 100 : Number(bill.amount) || 0;
+      const amount = typeof rec.amount === 'number' ? rec.amount : base;
       return { bill, amount, customAmount: typeof rec.amount === 'number', paid: !!rec.paid, due: dateInMonth(ym, bill.day) };
     }).sort((a, b) => a.due.localeCompare(b.due));
   }
   function billSummary(state, ym) {
     const rows = billsForMonth(state, ym);
-    const sum = { total: 0, paid: 0, unpaid: 0, rows };
+    const sum = { total: 0, paid: 0, unpaid: 0, cashUnpaid: 0, rows };
     for (const r of rows) {
       sum.total += r.amount;
       if (r.paid) sum.paid += r.amount;
-      else sum.unpaid += r.amount;
+      else {
+        sum.unpaid += r.amount;
+        // 刷信用卡的不会马上用到现金（之后会出现在信用卡账单里）
+        if (!r.bill.viaCard) sum.cashUnpaid += r.amount;
+      }
     }
     return sum;
   }
