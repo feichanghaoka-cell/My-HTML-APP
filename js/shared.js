@@ -269,7 +269,7 @@
     for (const s of seed.bills || []) {
       let bill = findBy(state.bills, [s.name, ...(s.match || [])]);
       if (!bill) { bill = { id: uid() }; state.bills.push(bill); }
-      Object.assign(bill, { name: s.name, category: s.category || '其他', amount: s.amount || 0, day: s.day || 1, domain: s.domain || '' });
+      Object.assign(bill, { name: s.name, category: s.category || '其他', amount: s.amount || 0, day: s.day || bill.day || 1, domain: s.domain || bill.domain || '' });
       for (const k of ['from', 'until']) { if (s[k]) bill[k] = s[k]; else delete bill[k]; }
       delete bill.usd;
       if (s.currency && FX[s.currency]) Object.assign(bill, { currency: s.currency, fx: s.fx, amount: 0 }); else { delete bill.currency; delete bill.fx; }
