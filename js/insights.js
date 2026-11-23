@@ -158,7 +158,19 @@
         text: `合计 ${money(sum)} 已经过了付款日。礼貌地发个提醒吧，收回来的钱可以先补备用金或还信用卡。` });
     }
 
-    // 9. 净资产在增长
+    // 9. 固定收入够不够付固定开销（收入只作参照，所以这里只是估算）
+    const income = CF.incomeForMonth(state, ym).reduce((x, r) => x + r.amount, 0);
+    if (income > 0) {
+      const spend = (Number(state.settings.dailyBudget) || 0) * 30;
+      const left = income - fixedMonth - spend;
+      out.push(left >= 0
+        ? { level: 'good', icon: '💰', title: `每月大约能多出 ${money(left)}`,
+          text: `固定收入 ${money(income)}，减掉这个月的固定开销和还款 ${money(fixedMonth)}、日常花费约 ${money(spend)}。多出来的先补备用金，再还信用卡和分期。` }
+        : { level: 'alert', icon: '🧮', title: `每月大约不够 ${money(-left)}`,
+          text: `固定收入 ${money(income)}，但这个月的固定开销和还款 ${money(fixedMonth)}，加上日常花费约 ${money(spend)}，已经超过收入。先看看订阅里有没有可以停的，或者这个月少开新的分期。` });
+    }
+
+    // 10. 净资产在增长
     if (monthAgo) {
       const nw = t.net - CF.totalsOf(state, monthAgo).net;
       if (nw > 1) out.push({ level: 'good', icon: '🌱', title: `净资产一个月多了 ${money(nw)}`, text: '资产减负债在变多，你在往对的方向走。' });

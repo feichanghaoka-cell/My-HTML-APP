@@ -149,6 +149,10 @@
       id: c.id, name: str(c.name), amount: num(c.amount), dueDay: day(c.dueDay, 28), domain: domain(c.domain),
       ...(/^\d{4}-\d{2}$/.test(c.since) ? { since: c.since } : {}),
     }));
+    // 没有开始月份的开销：从开始用 App 的那个月算起，免得之前的月份被当成“过期没付”
+    const firstDate = Object.keys(s.snapshots).filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort()[0];
+    const startYm = (firstDate || ymd(new Date())).slice(0, 7);
+    for (const b of s.bills) if (!b.from) b.from = startYm;
     for (const [date, snap] of Object.entries(s.snapshots)) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !snap || typeof snap.balances !== 'object' || !snap.balances) { delete s.snapshots[date]; continue; }
       const balances = {};
@@ -245,7 +249,7 @@
     if (Array.isArray(seed)) {
       // 多份资料依次导入，合计结果
       const res = seed.map((x) => applySeed(state, x, today)).filter(Boolean);
-      return res.length ? res.reduce((a, r) => ({ accounts: a.accounts + r.accounts, bills: a.bills + r.bills }), { accounts: 0, bills: 0 }) : null;
+      return res.length ? res.reduce((a, r) => ({ accounts: a.accounts + r.accounts, bills: a.bills + r.bills, clients: a.clients + r.clients }), { accounts: 0, bills: 0, clients: 0 }) : null;
     }
     if (!seed || !seed.id || state.settings.appliedSeeds.includes(seed.id)) return null;
     const live = () => state.accounts.filter((a) => !a.deleted);
@@ -254,7 +258,7 @@
     const dates = snapshotDates(state);
     // 负债的数字放进最近一次记录（今天记过就是今天），这样下次输入会自动预填
     const target = dates.length ? state.snapshots[dates[dates.length - 1]].balances : (state.seedBalances = state.seedBalances || {});
-    let accounts = 0, bills = 0;
+    let accounts = 0, bills = 0, clients = 0;
     for (const s of seed.accounts || []) {
       let acc = findBy(live(), [s.name, ...(s.match || [])]);
       if (!acc) {
@@ -268,9 +272,10 @@
     }
     for (const s of seed.bills || []) {
       let bill = findBy(state.bills, [s.name, ...(s.match || [])]);
-      if (!bill) { bill = { id: uid() }; state.bills.push(bill); }
+      if (!bill) { bill = { id: uid(), from: today.slice(0, 7) }; state.bills.push(bill); }
       Object.assign(bill, { name: s.name, category: s.category || '其他', amount: s.amount || 0, day: s.day || bill.day || 1, domain: s.domain || bill.domain || '' });
-      for (const k of ['from', 'until']) { if (s[k]) bill[k] = s[k]; else delete bill[k]; }
+      if (s.from) bill.from = s.from; else if (!bill.from) bill.from = today.slice(0, 7);
+      if (s.until) bill.until = s.until; else delete bill.until;
       delete bill.usd;
       if (s.currency && FX[s.currency]) Object.assign(bill, { currency: s.currency, fx: s.fx, amount: 0 }); else { delete bill.currency; delete bill.fx; }
       const card = s.viaCardName && findBy(live(), [s.viaCardName]);
@@ -285,8 +290,24 @@
       }
       bills++;
     }
+    // 只把某些开销的某几个月标成已付，不改其他任何东西
+    for (const s of seed.markPaid || []) {
+      const bill = findBy(state.bills, s.names);
+      if (!bill) continue;
+      for (const ym of s.months || []) {
+        const m = state.billMonths[ym] || (state.billMonths[ym] = {});
+        m[bill.id] = Object.assign(m[bill.id] || {}, { paid: true });
+      }
+    }
+    for (const s of seed.clients || []) {
+      let c = findBy(state.clients, [s.name, ...(s.match || [])]);
+      if (!c) { c = { id: uid(), since: s.since || today.slice(0, 7) }; state.clients.push(c); }
+      if (!c.since) c.since = s.since || today.slice(0, 7);
+      Object.assign(c, { name: s.name, amount: s.amount || 0, dueDay: s.dueDay || c.dueDay || 28, domain: s.domain || c.domain || '' });
+      clients++;
+    }
     state.settings.appliedSeeds.push(seed.id);
-    return { accounts, bills };
+    return { accounts, bills, clients };
   }
 
   /** 某天的花费：个人可用现金比上一次记录少了多少（可被手动修正覆盖） */

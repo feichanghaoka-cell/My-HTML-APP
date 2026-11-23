@@ -710,7 +710,7 @@
           const r = m[id] || (m[id] = {});
           const mv = parseNum(v.month);
           if (mv === null) delete r.amount; else r.amount = mv;
-        } else state.bills.push(Object.assign({ id: CF.uid() }, data));
+        } else state.bills.push(Object.assign({ id: CF.uid(), from: ym }, data));
         save(); render();
       },
       onDelete: id ? () => {
@@ -1182,7 +1182,7 @@
     const seeded = CF.applySeed(state, window.NUANLIU_SEED, todayStr());
     if (seeded) {
       await save();
-      const parts = [seeded.accounts && `${seeded.accounts} 个账户`, seeded.bills && `${seeded.bills} 项开销`].filter(Boolean);
+      const parts = [seeded.accounts && `${seeded.accounts} 个账户`, seeded.bills && `${seeded.bills} 项开销`, seeded.clients && `${seeded.clients} 个客户`].filter(Boolean);
       if (parts.length) setTimeout(() => toast(`已填好 ${parts.join('、')}`), 900);
     }
     ui.masked = !!state.settings.hideAmounts;
