@@ -159,6 +159,7 @@
     st.billRemindDays = Math.min(15, Math.max(0, parseInt(st.billRemindDays, 10) || 0));
     st.reminderEnabled = !!st.reminderEnabled;
     st.hideAmounts = !!st.hideAmounts;
+    st.debtPresetsApplied = !!st.debtPresetsApplied;
     return s;
   }
 
@@ -207,6 +208,14 @@
   function missingDebtPresets(state) {
     const names = state.accounts.filter((a) => !a.deleted).map((a) => a.name.toLowerCase());
     return DEBT_PRESETS.filter((p) => !(p.match || [p.name]).some((m) => names.some((n) => n.includes(m.toLowerCase()))));
+  }
+
+  /** 把还没建的常见负债加进账户列表，返回加了几个 */
+  function addDebtPresets(state) {
+    const items = missingDebtPresets(state).map((p) => ({ id: uid(), name: p.name, type: 'debt', domain: p.domain }));
+    const firstDeleted = state.accounts.findIndex((x) => x.deleted);
+    if (firstDeleted < 0) state.accounts.push(...items); else state.accounts.splice(firstDeleted, 0, ...items);
+    return items.length;
   }
 
   /** 某天的花费：个人可用现金比上一次记录少了多少（可被手动修正覆盖） */
@@ -295,7 +304,7 @@
 
   g.CF = {
     idbGet, idbSet, uid, ymd, ymOf, parseYmd, addDays, addMonths, diffDays, daysInMonth, dateInMonth,
-    TYPES, ASSET_TYPES, DEBT_PRESETS, missingDebtPresets, spendsViaDebt, defaultState, normalize, snapshotDates, totalsOf, prevSnapshotDate, spendOf,
+    TYPES, ASSET_TYPES, DEBT_PRESETS, missingDebtPresets, addDebtPresets, spendsViaDebt, defaultState, normalize, snapshotDates, totalsOf, prevSnapshotDate, spendOf,
     billsForMonth, billSummary, dueBills, remindDays, incomeForMonth, overdueIncome, fmt,
   };
 })(self);

@@ -826,10 +826,8 @@
     if (addDebts) addDebts.onclick = () => {
       const list = CF.missingDebtPresets(state);
       if (!confirm(`添加这 ${list.length} 个负债账户？\n${list.map((p) => '· ' + p.name).join('\n')}\n\n之后可以改名或删除不需要的。`)) return;
-      const items = list.map((p) => ({ id: CF.uid(), name: p.name, type: 'debt', domain: p.domain }));
-      const firstDeleted = state.accounts.findIndex((x) => x.deleted);
-      if (firstDeleted < 0) state.accounts.push(...items); else state.accounts.splice(firstDeleted, 0, ...items);
-      save(); haptic(); toast(`已添加 ${items.length} 个负债账户`); render();
+      const n = CF.addDebtPresets(state);
+      save(); haptic(); toast(`已添加 ${n} 个负债账户`); render();
     };
     $$('[data-move]').forEach((b) => (b.onclick = () => {
       const list = activeAccounts();
@@ -1072,6 +1070,13 @@
       else await CF.idbSet('state', state);
     } catch (e) {
       toast('无法读取本机存储，数据可能无法保存');
+    }
+    // 1.5 版起：自动帮你建好常用负债账户（只做一次；已有的会跳过，删掉的不会再加回来）
+    if (!state.settings.debtPresetsApplied) {
+      const n = CF.addDebtPresets(state);
+      state.settings.debtPresetsApplied = true;
+      await save();
+      if (n) setTimeout(() => toast(`已帮你加好 ${n} 个负债账户，到「记录」页填还欠多少`), 900);
     }
     ui.masked = !!state.settings.hideAmounts;
     $('#eye').onclick = toggleMask;
