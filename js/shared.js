@@ -31,6 +31,13 @@
     });
   }
 
+  /* ---------- 外币（订阅常用） ---------- */
+  const FX = {
+    USD: { key: 'usdRate', dflt: 4.2, label: 'USD 美元', sym: 'USD' },
+    CNY: { key: 'cnyRate', dflt: 0.63, label: 'CNY 人民币', sym: '¥' },
+  };
+  const fxRate = (state, c) => Number(state.settings[FX[c].key]) || FX[c].dflt;
+
   /* ---------- 日期 ---------- */
   const pad = (n) => String(n).padStart(2, '0');
   const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -77,7 +84,7 @@
     const bill = (name, category, domain) => ({ id: uid(), name, amount: 0, day: 1, category, domain: domain || '' });
     return {
       version: 1,
-      settings: { dailyBudget: 100, reminderEnabled: false, reminderTime: '21:00', billRemindDays: 3, hideAmounts: true, showTips: true, usdRate: 4.2, appliedSeeds: [] },
+      settings: { dailyBudget: 100, reminderEnabled: false, reminderTime: '21:00', billRemindDays: 3, hideAmounts: true, showTips: true, usdRate: 4.2, cnyRate: 0.63, appliedSeeds: [] },
       accounts: [
         acc('Maybank 个人', 'personal', 'maybank2u.com.my'),
         acc('Maybank 公司', 'business', 'maybank2u.com.my'),
@@ -135,7 +142,7 @@
     s.bills = s.bills.filter(okId).map((b) => ({
       id: b.id, name: str(b.name), amount: num(b.amount), day: day(b.day, 1), category: str(b.category, 20) || '其他', domain: domain(b.domain),
       ...(ymOk(b.from) ? { from: b.from } : {}), ...(ymOk(b.until) ? { until: b.until } : {}),
-      ...(b.currency === 'USD' ? { currency: 'USD', usd: num(b.usd) } : {}),
+      ...(FX[b.currency] ? { currency: b.currency, fx: num(b.fx != null ? b.fx : b.usd) } : {}),
       ...(typeof b.viaCard === 'string' && /^[\w-]{1,40}$/.test(b.viaCard) ? { viaCard: b.viaCard } : {}),
     }));
     s.clients = s.clients.filter(okId).map((c) => ({
@@ -164,7 +171,7 @@
     st.reminderEnabled = !!st.reminderEnabled;
     st.hideAmounts = !!st.hideAmounts;
     st.showTips = st.showTips !== false;
-    st.usdRate = num(st.usdRate) > 0 ? num(st.usdRate) : 4.2;
+    for (const [c, f] of Object.entries(FX)) st[f.key] = num(st[f.key]) > 0 ? num(st[f.key]) : f.dflt;
     st.debtPresetsApplied = !!st.debtPresetsApplied;
     st.appliedSeeds = Array.isArray(st.appliedSeeds) ? st.appliedSeeds.filter((x) => typeof x === 'string') : [];
     if (s.seedBalances && typeof s.seedBalances === 'object') {
@@ -264,7 +271,8 @@
       if (!bill) { bill = { id: uid() }; state.bills.push(bill); }
       Object.assign(bill, { name: s.name, category: s.category || '其他', amount: s.amount || 0, day: s.day || 1, domain: s.domain || '' });
       for (const k of ['from', 'until']) { if (s[k]) bill[k] = s[k]; else delete bill[k]; }
-      if (s.usd) Object.assign(bill, { currency: 'USD', usd: s.usd, amount: 0 }); else { delete bill.currency; delete bill.usd; }
+      delete bill.usd;
+      if (s.currency && FX[s.currency]) Object.assign(bill, { currency: s.currency, fx: s.fx, amount: 0 }); else { delete bill.currency; delete bill.fx; }
       const card = s.viaCardName && findBy(live(), [s.viaCardName]);
       if (card) bill.viaCard = card.id; else delete bill.viaCard;
       for (const [ym, amount] of Object.entries(s.months || {})) {
@@ -322,7 +330,7 @@
     return state.bills.filter((bill) => billActive(bill, ym)).map((bill) => {
       const rec = m[bill.id] || {};
       // 美元订阅按设置里的汇率换算成 RM；某个月填了实际金额就用那个
-      const base = bill.currency === 'USD' ? Math.round((Number(bill.usd) || 0) * (Number(state.settings.usdRate) || 4.2) * 100) / 100 : Number(bill.amount) || 0;
+      const base = FX[bill.currency] ? Math.round((Number(bill.fx) || 0) * fxRate(state, bill.currency) * 100) / 100 : Number(bill.amount) || 0;
       const amount = typeof rec.amount === 'number' ? rec.amount : base;
       return { bill, amount, customAmount: typeof rec.amount === 'number', paid: !!rec.paid, due: dateInMonth(ym, bill.day) };
     }).sort((a, b) => a.due.localeCompare(b.due));
@@ -384,7 +392,7 @@
 
   g.CF = {
     idbGet, idbSet, uid, ymd, ymOf, parseYmd, addDays, addMonths, diffDays, daysInMonth, dateInMonth,
-    TYPES, ASSET_TYPES, DEBT_PRESETS, missingDebtPresets, addDebtPresets, applySeed, spendsViaDebt, billLeft, REPAY_CATS, defaultState, normalize, snapshotDates, totalsOf, prevSnapshotDate, spendOf,
+    FX, fxRate, TYPES, ASSET_TYPES, DEBT_PRESETS, missingDebtPresets, addDebtPresets, applySeed, spendsViaDebt, billLeft, REPAY_CATS, defaultState, normalize, snapshotDates, totalsOf, prevSnapshotDate, spendOf,
     billsForMonth, billSummary, dueBills, remindDays, incomeForMonth, overdueIncome, fmt,
   };
 })(self);
