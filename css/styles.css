@@ -115,6 +115,16 @@ main.enter { animation: page-in .28s ease-out both; }
 .debt .chip.down { color: var(--bad); }
 .debt .chip.up { color: var(--good); }
 .debt-rows { margin-top: 10px; }
+.debt-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: .5px solid var(--sep); }
+.debt-stats > * { display: flex; flex-direction: column; }
+.debt-stats span { font-size: 13px; color: var(--ink-2); }
+.debt-stats b { font-size: 20px; font-family: var(--rounded); font-weight: 700; }
+.debt-stats small { font-size: 12px; color: var(--ink-3); }
+.debt-stats a small { color: var(--tint-text); }
+.debt-next { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--tint-bg); font-size: 13px; color: var(--ink); }
+.debt-next b { font-weight: 600; }
+.share { display: block; height: 4px; margin-top: 5px; border-radius: 99px; background: var(--fill); overflow: hidden; max-width: 160px; }
+.share i { display: block; height: 100%; border-radius: 99px; background: var(--bad); opacity: .7; }
 .row-amt.cleared { color: var(--good); }
 .bad-text { color: var(--bad); font-weight: 600; }
 .good-text { color: var(--good); font-weight: 600; }

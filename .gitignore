@@ -2,3 +2,6 @@ android/.sdk/
 android/build/
 *.p12
 *.apk
+
+# 个人财务资料只打包进 APK，不上传 GitHub
+js/seed-data.js

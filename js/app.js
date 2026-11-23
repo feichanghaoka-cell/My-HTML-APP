@@ -344,15 +344,36 @@
       const d = before && a.id in before && a.id in now ? v - (Number(before[a.id]) || 0) : 0;
       change += d;
       const dTxt = Math.abs(d) > 0.004 ? `<span class="${d > 0 ? 'bad-text' : 'good-text'}">${d > 0 ? '多了' : '还了'} RM ${fmt(Math.abs(d))}</span>` : '';
-      return { a, v, html: `<li class="row">
-        ${logo(a.name, a.domain)}
-        <div class="row-main"><strong>${esc(a.name)}</strong><small>${dTxt || (v > 0 ? '没有变动' : '目前没有欠款')}</small></div>
-        <div class="row-amt ${v > 0 ? '' : 'cleared'}">${v > 0 ? 'RM ' + fmt(v) : '✓'}</div></li>` };
-    }).sort((x, y) => y.v - x.v);
+      return { a, v, d: dTxt };
+    }).sort((x, y) => y.v - x.v).map((r) => {
+      const share = total > 0 ? (Math.max(0, r.v) / total) * 100 : 0;
+      r.html = `<li class="row debt-row">
+        ${logo(r.a.name, r.a.domain)}
+        <div class="row-main"><strong>${esc(r.a.name)}</strong>
+          <small>${r.v > 0 ? `${share.toFixed(1)}% · ` : ''}${r.d || (r.v > 0 ? '没有变动' : '目前没有欠款')}</small>
+          ${r.v > 0 ? `<span class="share" aria-hidden="true"><i style="width:${share}%"></i></span>` : ''}</div>
+        <div class="row-amt ${r.v > 0 ? '' : 'cleared'}">${r.v > 0 ? 'RM ' + fmt(r.v) : '✓'}</div></li>`;
+      return r;
+    });
+    const t = CF.totalsOf(state, date);
+    const ratio = t.total > 0 ? (total / t.total) * 100 : null;
+    // 30 天内要还多少：还款类开销里还没付的（跨月也算，月底时下个月 1、2 号的账单很重要）
+    const today = todayStr();
+    const repayRows = [-1, 0, 1].map((n) => CF.addMonths(today.slice(0, 7), n))
+      .flatMap((m) => CF.billsForMonth(state, m))
+      .filter((r) => CF.REPAY_CATS.includes(r.bill.category) && r.amount > 0 && !r.paid)
+      .filter((r) => { const d = CF.diffDays(today, r.due); return d <= 30 && d >= -31; });
+    const repayLeft = repayRows.reduce((x, r) => x + r.amount, 0);
+    const nextRows = CF.dueBills(state, todayStr()).filter((r) => CF.REPAY_CATS.includes(r.bill.category));
     return `<section class="card debt">
       <div class="card-head"><h3>负债</h3><span class="muted">还欠的总额</span></div>
       ${money(total, 'debt-num')}
       ${Math.abs(change) > 0.004 ? `<div class="chip ${change > 0 ? 'down' : 'up'}">${change > 0 ? '▲ 比上次多欠' : '▼ 比上次少欠'} RM ${fmt(Math.abs(change))}</div>` : ''}
+      <div class="debt-stats">
+        <div><span>负债率</span><b class="${ratio !== null && ratio > 50 ? 'bad-text' : ''}">${ratio === null ? '—' : ratio.toFixed(1) + '%'}</b><small>负债 ÷ 总资产</small></div>
+        <a href="#bills"><span>30 天内要还</span><b>RM ${fmt(repayLeft)}</b><small>${repayRows.length ? `${repayRows.length} 笔 · 看还款计划 ›` : '看还款计划 ›'}</small></a>
+      </div>
+      ${nextRows.length ? `<div class="debt-next">${nextRows.map((r) => `<span>${esc(r.bill.name)} RM ${fmt(r.amount)} · ${r.daysLeft < 0 ? `<b class="bad-text">已过期 ${-r.daysLeft} 天</b>` : r.daysLeft === 0 ? '<b>今天到期</b>' : `${r.daysLeft} 天后`}</span>`).join('')}</div>` : ''}
       <ul class="rows debt-rows">${rows.map((r) => r.html).join('')}</ul>
       <p class="fine">负债不计入总资产，只用来算净资产。信用卡、分期刷了算花费，用现金还款不算。</p>
     </section>`;
@@ -439,7 +460,8 @@
     const prevBal = prev ? state.snapshots[prev].balances : {};
     // 输入到一半切去别的页面再回来，数字还在
     const draft = ui.draft && ui.draft.date === date ? ui.draft.values : null;
-    const base = draft || (existing ? existing.balances : prevBal);
+    // 还没有任何记录时，用预先帮你填好的负债数字
+    const base = draft || (existing ? existing.balances : prev ? prevBal : (state.seedBalances || {}));
     const accounts = activeAccounts();
     const assetAccounts = accounts.filter((a) => a.type !== 'debt');
     const debtAccounts = accounts.filter((a) => a.type === 'debt');
@@ -533,7 +555,7 @@
   /* =====================================================
      固定开销与订阅
      ===================================================== */
-  const BILL_CATS = ['住房', '贷款', '网络通讯', '订阅服务', '保险', '水电', '其他'];
+  const BILL_CATS = ['住房', '贷款', '信用卡 / 分期', '网络通讯', '订阅服务', '保险', '水电', '其他'];
 
   function monthNav(ym, key) {
     return `<div class="month-nav">
@@ -563,11 +585,13 @@
         <button type="button" class="row-body" data-edit="${r.bill.id}">
           ${logo(r.bill.name, r.bill.domain)}
           <div class="row-main"><strong>${esc(r.bill.name)}</strong>
-            <small>每月 ${r.bill.day} 日 · ${esc(r.bill.category || '其他')} ${status}</small></div>
-          <div class="row-amt ${r.amount ? '' : 'zero'}">${r.amount ? 'RM ' + fmt(r.amount) : '填金额'}${r.customAmount ? '<small>本月调整</small>' : ''}</div>
+            <small>每月 ${r.bill.day} 日 · ${(() => { const n = CF.billLeft(r.bill, ym); return n ? `还剩 ${n} 期` : esc(r.bill.category || '其他'); })()} ${status}</small></div>
+          <div class="row-amt ${r.amount ? '' : 'zero'}">${r.amount ? 'RM ' + fmt(r.amount) : '填金额'}${r.customAmount && r.bill.amount ? '<small>本月调整</small>' : ''}</div>
         </button></li>`;
     };
-    const fixed = sum.rows.filter((r) => r.bill.category !== '订阅服务');
+    const isRepay = (r) => CF.REPAY_CATS.includes(r.bill.category);
+    const repay = sum.rows.filter(isRepay);
+    const fixed = sum.rows.filter((r) => !isRepay(r) && r.bill.category !== '订阅服务');
     const subs = sum.rows.filter((r) => r.bill.category === '订阅服务');
     const group = (title, rows, cat) => `<section class="card">
       <div class="card-head"><h3>${title}</h3><span class="muted">RM ${fmt(rows.reduce((a, r) => a + r.amount, 0))}</span></div>
@@ -578,7 +602,7 @@
     view.innerHTML = `
       ${monthNav(ym)}
       <section class="card summary">
-        <span class="eyebrow">本月固定开销</span>
+        <span class="eyebrow">本月要付的钱</span>
         ${money(sum.total, 'sum-num')}
         <div class="bar good"><i style="width:${pct}%"></i></div>
         <div class="sum-split">
@@ -586,6 +610,7 @@
           <div><span>未付</span><b class="${sum.unpaid > 0 ? 'accent' : ''}">RM ${fmt(sum.unpaid)}</b></div>
         </div>
       </section>
+      ${group('还款', repay, '信用卡 / 分期')}
       ${group('固定开销', fixed, '其他')}
       ${group('订阅服务', subs, '订阅服务')}`;
 
@@ -612,6 +637,7 @@
         { key: 'amount', label: '每月金额（默认）', type: 'money', value: bill.amount },
         ...(id ? [{ key: 'month', label: `${monthLabel(ym)}的金额`, type: 'money', value: typeof rec.amount === 'number' ? rec.amount : '', placeholder: '留空 = 用默认金额', hint: '这个月金额不一样时填这里，只影响这个月。' }] : []),
         { key: 'day', label: '扣款日（每月几号）', type: 'int', value: bill.day },
+        { key: 'until', label: '最后一期（分期用，可留空）', type: 'month', value: bill.until || '', hint: '过了这个月就不再出现、也不再提醒。' },
         { key: 'domain', label: '品牌网址（用来抓 logo，可留空）', value: bill.domain, placeholder: '例如 spotify.com' },
       ],
       onSave: (v) => {
@@ -620,6 +646,7 @@
           name: v.name.trim(), category: v.category, amount: parseNum(v.amount) || 0,
           day: Math.min(31, Math.max(1, parseInt(v.day, 10) || 1)), domain: cleanDomain(v.domain),
         };
+        if (/^\d{4}-\d{2}$/.test(v.until || '')) data.until = v.until; else delete bill.until;
         if (id) {
           Object.assign(bill, data);
           const m = state.billMonths[ym] || (state.billMonths[ym] = {});
@@ -1066,8 +1093,9 @@
   async function boot() {
     try {
       const saved = await CF.idbGet('state');
-      if (saved) state = CF.normalize(saved);
-      else await CF.idbSet('state', state);
+      // 新装的也走一遍 normalize，保证所有设置字段都在
+      state = CF.normalize(saved || state);
+      if (!saved) await CF.idbSet('state', state);
     } catch (e) {
       toast('无法读取本机存储，数据可能无法保存');
     }
@@ -1076,7 +1104,13 @@
       const n = CF.addDebtPresets(state);
       state.settings.debtPresetsApplied = true;
       await save();
-      if (n) setTimeout(() => toast(`已帮你加好 ${n} 个负债账户，到「记录」页填还欠多少`), 900);
+      if (n && !window.NUANLIU_SEED) setTimeout(() => toast(`已帮你加好 ${n} 个负债账户，到「记录」页填还欠多少`), 900);
+    }
+    // 打包进 APK 的个人资料（js/seed-data.js，不在 GitHub 上）
+    const seeded = CF.applySeed(state, window.NUANLIU_SEED, todayStr());
+    if (seeded) {
+      await save();
+      setTimeout(() => toast(`已填好 ${seeded.accounts} 笔负债和 ${seeded.bills} 项还款计划`), 900);
     }
     ui.masked = !!state.settings.hideAmounts;
     $('#eye').onclick = toggleMask;

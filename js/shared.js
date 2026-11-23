@@ -77,7 +77,7 @@
     const bill = (name, category, domain) => ({ id: uid(), name, amount: 0, day: 1, category, domain: domain || '' });
     return {
       version: 1,
-      settings: { dailyBudget: 100, reminderEnabled: false, reminderTime: '21:00', billRemindDays: 3, hideAmounts: true },
+      settings: { dailyBudget: 100, reminderEnabled: false, reminderTime: '21:00', billRemindDays: 3, hideAmounts: true, appliedSeeds: [] },
       accounts: [
         acc('Maybank 个人', 'personal', 'maybank2u.com.my'),
         acc('Maybank 公司', 'business', 'maybank2u.com.my'),
@@ -131,8 +131,10 @@
       ...(a.deleted ? { deleted: true } : {}),
       ...(a.type === 'debt' && a.excludeSpend ? { excludeSpend: true } : {}),
     }));
+    const ymOk = (v) => typeof v === 'string' && /^\d{4}-\d{2}$/.test(v);
     s.bills = s.bills.filter(okId).map((b) => ({
       id: b.id, name: str(b.name), amount: num(b.amount), day: day(b.day, 1), category: str(b.category, 20) || '其他', domain: domain(b.domain),
+      ...(ymOk(b.from) ? { from: b.from } : {}), ...(ymOk(b.until) ? { until: b.until } : {}),
     }));
     s.clients = s.clients.filter(okId).map((c) => ({
       id: c.id, name: str(c.name), amount: num(c.amount), dueDay: day(c.dueDay, 28), domain: domain(c.domain),
@@ -160,6 +162,12 @@
     st.reminderEnabled = !!st.reminderEnabled;
     st.hideAmounts = !!st.hideAmounts;
     st.debtPresetsApplied = !!st.debtPresetsApplied;
+    st.appliedSeeds = Array.isArray(st.appliedSeeds) ? st.appliedSeeds.filter((x) => typeof x === 'string') : [];
+    if (s.seedBalances && typeof s.seedBalances === 'object') {
+      const sb = {};
+      for (const [id, v] of Object.entries(s.seedBalances)) sb[id] = num(v);
+      s.seedBalances = sb;
+    } else delete s.seedBalances;
     return s;
   }
 
@@ -200,7 +208,7 @@
     { name: 'Hong Leong 信用卡 1', domain: 'hlb.com.my', kind: '信用卡' },
     { name: 'Hong Leong 信用卡 2', domain: 'hlb.com.my', kind: '信用卡' },
     { name: 'SPayLater', domain: 'shopee.com.my', kind: '分期' },
-    { name: 'Atomy 分期', domain: 'atomy.com', kind: '分期' },
+    { name: 'Atome', domain: 'atome.my', kind: '分期', match: ['Atome', 'Atomy'] },
     { name: '车贷', domain: '', kind: '贷款', match: ['车贷'] },
     { name: 'PTPTN 学贷', domain: 'ptptn.gov.my', kind: '贷款', match: ['PTPTN', '学贷'] },
   ];
@@ -216,6 +224,49 @@
     const firstDeleted = state.accounts.findIndex((x) => x.deleted);
     if (firstDeleted < 0) state.accounts.push(...items); else state.accounts.splice(firstDeleted, 0, ...items);
     return items.length;
+  }
+
+  /**
+   * 一次性导入的资料（例如帮你填好的负债和还款计划）。
+   * 同一份只会导入一次；已有的账户按名称找到后更新，不会重复建；不会覆盖你自己填过的数字。
+   */
+  function applySeed(state, seed, today) {
+    if (!seed || !seed.id || state.settings.appliedSeeds.includes(seed.id)) return null;
+    const live = () => state.accounts.filter((a) => !a.deleted);
+    const lc = (x) => String(x).trim().toLowerCase();
+    const findBy = (list, names) => list.find((x) => names.some((n) => lc(x.name) === lc(n)));
+    const dates = snapshotDates(state);
+    // 负债的数字放进最近一次记录（今天记过就是今天），这样下次输入会自动预填
+    const target = dates.length ? state.snapshots[dates[dates.length - 1]].balances : (state.seedBalances = state.seedBalances || {});
+    let accounts = 0, bills = 0;
+    for (const s of seed.accounts || []) {
+      let acc = findBy(live(), [s.name, ...(s.match || [])]);
+      if (!acc) {
+        acc = { id: uid(), name: s.name, type: s.type || 'debt', domain: s.domain || '' };
+        const firstDeleted = state.accounts.findIndex((x) => x.deleted);
+        if (firstDeleted < 0) state.accounts.push(acc); else state.accounts.splice(firstDeleted, 0, acc);
+      }
+      Object.assign(acc, { name: s.name, type: s.type || acc.type, domain: s.domain || acc.domain });
+      if (typeof s.balance === 'number' && !(Number(target[acc.id]) > 0)) target[acc.id] = s.balance;
+      accounts++;
+    }
+    for (const s of seed.bills || []) {
+      let bill = findBy(state.bills, [s.name, ...(s.match || [])]);
+      if (!bill) { bill = { id: uid() }; state.bills.push(bill); }
+      Object.assign(bill, { name: s.name, category: s.category || '其他', amount: s.amount || 0, day: s.day || 1, domain: s.domain || '' });
+      for (const k of ['from', 'until']) { if (s[k]) bill[k] = s[k]; else delete bill[k]; }
+      for (const [ym, amount] of Object.entries(s.months || {})) {
+        const m = state.billMonths[ym] || (state.billMonths[ym] = {});
+        m[bill.id] = Object.assign(m[bill.id] || {}, { amount });
+      }
+      for (const ym of s.paidMonths || []) {
+        const m = state.billMonths[ym] || (state.billMonths[ym] = {});
+        m[bill.id] = Object.assign(m[bill.id] || {}, { paid: true });
+      }
+      bills++;
+    }
+    state.settings.appliedSeeds.push(seed.id);
+    return { accounts, bills };
   }
 
   /** 某天的花费：个人可用现金比上一次记录少了多少（可被手动修正覆盖） */
@@ -243,9 +294,20 @@
   }
 
   /* ---------- 固定开销 ---------- */
+  /** 分期类开销只在 from ~ until 这几个月出现 */
+  const billActive = (bill, ym) => (!bill.from || ym >= bill.from) && (!bill.until || ym <= bill.until);
+  /** 包括 ym 这个月在内，还剩几期（没有设最后一期就是 null） */
+  const billLeft = (bill, ym) => {
+    if (!bill.until) return null;
+    const [y1, m1] = ym.split('-').map(Number), [y2, m2] = bill.until.split('-').map(Number);
+    return (y2 - y1) * 12 + (m2 - m1) + 1;
+  };
+  /** 还款类（信用卡、分期、贷款），总览的负债卡片会单独统计 */
+  const REPAY_CATS = ['贷款', '信用卡 / 分期'];
+
   function billsForMonth(state, ym) {
     const m = state.billMonths[ym] || {};
-    return state.bills.map((bill) => {
+    return state.bills.filter((bill) => billActive(bill, ym)).map((bill) => {
       const rec = m[bill.id] || {};
       const amount = typeof rec.amount === 'number' ? rec.amount : Number(bill.amount) || 0;
       return { bill, amount, customAmount: typeof rec.amount === 'number', paid: !!rec.paid, due: dateInMonth(ym, bill.day) };
@@ -304,7 +366,7 @@
 
   g.CF = {
     idbGet, idbSet, uid, ymd, ymOf, parseYmd, addDays, addMonths, diffDays, daysInMonth, dateInMonth,
-    TYPES, ASSET_TYPES, DEBT_PRESETS, missingDebtPresets, addDebtPresets, spendsViaDebt, defaultState, normalize, snapshotDates, totalsOf, prevSnapshotDate, spendOf,
+    TYPES, ASSET_TYPES, DEBT_PRESETS, missingDebtPresets, addDebtPresets, applySeed, spendsViaDebt, billLeft, REPAY_CATS, defaultState, normalize, snapshotDates, totalsOf, prevSnapshotDate, spendOf,
     billsForMonth, billSummary, dueBills, remindDays, incomeForMonth, overdueIncome, fmt,
   };
 })(self);
