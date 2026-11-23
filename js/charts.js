@@ -1,4 +1,4 @@
-/* 暖流 — 轻量 SVG 图表（无依赖） */
+/* 有数 — 轻量 SVG 图表（无依赖） */
 (function (g) {
   'use strict';
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -68,7 +68,7 @@
     const W = Math.max(280, el.clientWidth || 320);
     const padL = 6, padR = 6, headH = 26, plotH = 92, gapY = 22, axisH = 20;
     const series = [
-      { key: 'total', name: '总资产', color: '#FF9500' },
+      { key: 'total', name: '总资产', color: '#5856D6' },
       { key: 'cash', name: '个人可用现金', color: '#EC6A45' },
     ];
     const H = series.length * (headH + plotH) + gapY * (series.length - 1) + axisH;

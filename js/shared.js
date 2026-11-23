@@ -1,4 +1,4 @@
-/* 暖流 — 页面与 Service Worker 共用的数据层与计算逻辑 */
+/* 有数 — 页面与 Service Worker 共用的数据层与计算逻辑 */
 (function (g) {
   'use strict';
 

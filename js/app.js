@@ -1,4 +1,4 @@
-/* 暖流 — 应用主逻辑 */
+/* 有数 — 应用主逻辑 */
 (function () {
   'use strict';
 
@@ -215,7 +215,7 @@
       view.innerHTML = `
         <section class="welcome">
           <img src="icons/icon.svg" alt="" width="76" height="76">
-          <h1>欢迎来到暖流</h1>
+          <h1>欢迎使用有数</h1>
           <p>每天花一分钟输入各账户的余额，<br>这里会自动帮你加总，让你一眼看清楚。</p>
           <a class="btn primary big" href="#entry">记录第一天的余额</a>
         </section>
@@ -946,7 +946,7 @@
             ? '<button type="button" class="btn" id="notif-test">发一条测试通知</button><button type="button" class="btn ghost" id="notif-off">关闭通知</button>'
             : `<button type="button" class="btn primary" id="notif-on" ${perm === 'unsupported' ? 'disabled' : ''}>开启通知</button>`}
         </div>
-        ${Native ? '<p class="fine">提醒由手机系统的闹钟发出，App 关闭后也会响。如果收不到，请在系统设置里允许暖流的通知，并把它从“休眠应用”里移除。</p>' : ''}
+        ${Native ? '<p class="fine">提醒由手机系统的闹钟发出，App 关闭后也会响。如果收不到，请在系统设置里允许有数的通知，并把它从“休眠应用”里移除。</p>' : ''}
         <div class="callout" ${Native ? 'hidden' : ''}>
           <strong>关于通知的可靠性</strong>
           <p>网页 App 没有自己的服务器时，安卓不保证准时推送：App 开着或刚在后台时会准时提醒；完全关闭后，要靠系统的“定期后台同步”，时间由系统决定，可能延迟或不触发${ui.periodic === false ? '（当前环境未授予后台同步，需要先安装到主屏幕）' : ''}。</p>
@@ -972,9 +972,9 @@
       <section class="card" ${Native ? 'hidden' : ''}>
         <h3>安装到主屏幕</h3>
         ${standalone ? '<p class="muted">已经作为 App 安装 ✓</p>'
-          : ui.installEvt ? '<button type="button" class="btn primary" id="install">安装暖流</button>'
+          : ui.installEvt ? '<button type="button" class="btn primary" id="install">安装有数</button>'
           : '<p class="muted">在 Chrome 或 Samsung Internet 的菜单里选择“添加到主屏幕 / 安装应用”。安装后通知和离线使用会更稳定。</p>'}
-        <p class="fine">暖流 · 第一版 · 所有数据仅保存在本机</p>
+        <p class="fine">有数 · 心里有数 · 所有数据仅保存在本机</p>
       </section>`;
 
     for (const [id, key] of [['#set-usd', 'usdRate'], ['#set-cny', 'cnyRate']]) {
@@ -1011,7 +1011,7 @@
     if (test) test.onclick = async () => {
       if (Native) { Native.testNotification(); return; }
       const reg = await navigator.serviceWorker.ready;
-      reg.showNotification('暖流测试通知', { body: '看到这条就代表通知可以正常显示。', icon: './icons/icon-192.png', badge: './icons/badge.png', tag: 'test', data: { hash: '#entry' } });
+      reg.showNotification('有数测试通知', { body: '看到这条就代表通知可以正常显示。', icon: './icons/icon-192.png', badge: './icons/badge.png', tag: 'test', data: { hash: '#entry' } });
     };
 
     $('#cal-google').href = googleCalendarUrl();
@@ -1035,7 +1035,7 @@
         location.hash = '#home';
         render();
       } catch (err) {
-        toast('导入失败：这不是暖流的备份文件');
+        toast('导入失败：这不是有数的备份文件');
       }
     };
 
@@ -1100,7 +1100,7 @@
   function googleCalendarUrl() {
     const { start, end } = reminderStamp();
     const p = new URLSearchParams({
-      action: 'TEMPLATE', text: '暖流：记录今天的余额', details: `打开输入页：${appUrl()}`,
+      action: 'TEMPLATE', text: '有数：记录今天的余额', details: `打开输入页：${appUrl()}`,
       dates: `${start}/${end}`, recur: 'RRULE:FREQ=DAILY',
       ctz: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Kuala_Lumpur',
     });
@@ -1112,7 +1112,7 @@
     const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
     return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Nuanliu//Cashflow//ZH', 'BEGIN:VEVENT',
       `UID:nuanliu-daily-${Date.now()}@nuanliu`, `DTSTAMP:${stamp}`, `DTSTART:${start}`, `DTEND:${end}`,
-      'RRULE:FREQ=DAILY', 'SUMMARY:暖流：记录今天的余额', `DESCRIPTION:打开输入页：${appUrl()}`, `URL:${appUrl()}`,
+      'RRULE:FREQ=DAILY', 'SUMMARY:有数：记录今天的余额', `DESCRIPTION:打开输入页：${appUrl()}`, `URL:${appUrl()}`,
       'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:记录今天的余额', 'TRIGGER:PT0M', 'END:VALARM',
       'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
   }

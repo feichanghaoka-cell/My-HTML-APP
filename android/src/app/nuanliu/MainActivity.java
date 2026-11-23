@@ -24,7 +24,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
-/** 暖流的安卓外壳：把打包在 APK 里的网页界面放进 WebView，并提供原生的通知和文件保存。 */
+/** 有数的安卓外壳：把打包在 APK 里的网页界面放进 WebView，并提供原生的通知和文件保存。 */
 public class MainActivity extends Activity {
     /** 只在 App 内部使用的虚拟网址，让界面运行在 https 环境里（本机数据库需要）。 */
     static final String HOST = "app.nuanliu.internal";
@@ -214,7 +214,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void testNotification() {
-            ReminderReceiver.notify(MainActivity.this, 99, "暖流测试通知", "看到这条就代表通知可以正常显示。", "#entry");
+            ReminderReceiver.notify(MainActivity.this, 99, "有数测试通知", "看到这条就代表通知可以正常显示。", "#entry");
         }
 
         @JavascriptInterface
